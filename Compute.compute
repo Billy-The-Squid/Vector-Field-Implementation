@@ -1,0 +1,131 @@
+﻿#pragma kernel VectorField
+
+float _CoulombConstant;
+
+// Buffer indices: [id.x + _SideLength * id.y + _SideLength * _SideLength * id.z]
+// The buffer storing the positions
+RWStructuredBuffer<float3> _Positions;
+
+// The buffer storing the value of the vector field at each point
+RWStructuredBuffer<float3> _Vectors;
+// It's set every frame by the C# script.
+
+// Buffers that store the other coordinate axes
+RWStructuredBuffer<float3> _Vectors2;
+RWStructuredBuffer<float3> _Vectors3;
+
+int _NumberOfCharges; // Type? Also, there should be a way to work around this. 
+RWStructuredBuffer<float> _Charges;
+RWStructuredBuffer<float3> _ChargePositions;
+
+float3 _OriginPosition;
+// The coordinates of the Graph transform
+
+int _SideLength; // kind of necessary because of the cubic thread setup? or is there a workaround with groups?
+// int shift;
+// int _XLength, _YLength, _ZLength;
+// The number of points in each direction
+float _Spacing;
+// The distance between neighboring field points
+
+
+
+
+
+int IDToIndex(float3 id)
+{
+    return id.x + _SideLength * id.y + _SideLength * _SideLength * id.z;
+}
+
+// Make an id -> index function and rewrite everything in terms of just index? 
+// Then we could put the bounds check in the kernel.
+void IDToPosition(float3 id)
+{
+	if (id.x < _SideLength && id.y < _SideLength && id.z < _SideLength)
+	{
+        _Positions[IDToIndex(id)] =	id * _Spacing + _OriginPosition;
+	} // I really hope this is right. 
+	
+	// Should we add offsets to these?  
+}
+
+void FieldStrength(float index)
+{
+	float3 result = 0;
+	float3 position = _Positions[index];
+	for (int i = 0; i < _NumberOfCharges; i++)
+	{
+		float3 displacement = position - _ChargePositions[i];
+		float distance = sqrt(displacement.x * displacement.x + displacement.y * displacement.y + displacement.z * displacement.z);
+
+		result += _CoulombConstant * _Charges[i] * displacement / (pow(distance, 3));
+	}
+	// Renormalizing...
+	result *= 1e-10;
+	float result_mag = sqrt(result.x * result.x + result.y * result.y + result.z * result.z);
+	result *= (1 - 1 / pow(result_mag + 1, 2)) / result_mag;
+	_Vectors[index] = result;
+	// We should figure out a way to do a reasonable rescaling, and then we should apply a different factor
+	// to keep the length reasonable. One candidate for final length is (-1/(len + 1) + 1).
+}
+
+void CalcVectors23(float index)
+{ // Calculates the orthogonal vectors, given a vector.
+	// The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.
+	// Please find a different way to do this. 
+	float3 vect = _Vectors[index];
+	float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+	float3 vect_2;
+	float3 vect_3;
+	if (vect.x == 0.0 && vect.y == 0.0 && vect.z == 0.0)
+	{   // Check whether we should just make the mesh disappear. 
+		_Vectors2[index] = float3(0.0, 0.0, 0.0);
+		_Vectors3[index] = float3(0.0, 0.0, 0.0);
+		return;
+	}
+	
+	// Depending on how the material works and if the trans. matrix needs to scale, NORMALIZE VECT HERE.
+	if ((vect.x == 0.0) && (vect.y == 0.0))
+	{ // Guaranteeing that vect_2 isn't parallel with vect with 
+		vect_2.x = 0.0;
+		vect_2.y = -vect.z;
+		vect_2.z = vect.y;
+	}
+	else
+	{
+		vect_2.x = vect.y;
+		vect_2.y = -vect.x;
+		vect_2.z = 0.0;
+	}
+
+	// Re-magnituding vect_2
+	float vect_2_mag = sqrt(vect_2.x * vect_2.x + vect_2.y * vect_2.y + vect_2.z * vect_2.z);
+	vect_2 *= (vect_mag / vect_2_mag);
+
+	// Cross product!
+	vect_3.x = vect.y * vect_2.z - vect.z * vect_2.y;
+	vect_3.y = vect.z * vect_2.x - vect.x * vect_2.z;
+	vect_3.z = vect.x * vect_2.y - vect.y * vect_2.x;
+
+	// Re-magnituding vect_3
+	float vect_3_mag = sqrt(vect_3.x * vect_3.x + vect_3.y * vect_3.y + vect_3.z * vect_3.z);
+	vect_3 *= (vect_mag / vect_3_mag);
+	
+	_Vectors2[index] = vect_2;
+	_Vectors3[index] = vect_3;
+}
+
+
+
+[numthreads(4, 4, 4)]
+void VectorField(uint3 id : SV_DispatchThreadID)
+{
+	// shift = floor(_SideLength / 2.0);
+    if (id.x < (uint) _SideLength && id.y < (uint) _SideLength && id.z < (uint) _SideLength)
+    {
+        float index = IDToIndex(id);
+        IDToPosition(id);
+        FieldStrength(index);
+        CalcVectors23(index);
+    }
+}
