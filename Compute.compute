@@ -1,6 +1,6 @@
 ﻿#pragma kernel VectorField
 
-float _CoulombConstant;
+//float _CoulombConstant;
 
 // Buffer indices: [id.x + _SideLength * id.y + _SideLength * _SideLength * id.z]
 // The buffer storing the positions
@@ -14,9 +14,9 @@ RWStructuredBuffer<float3> _Vectors;
 RWStructuredBuffer<float3> _Vectors2;
 RWStructuredBuffer<float3> _Vectors3;
 
-int _NumberOfCharges; // Type? Also, there should be a way to work around this. 
-RWStructuredBuffer<float> _Charges;
-RWStructuredBuffer<float3> _ChargePositions;
+//int _NumberOfCharges; // Type? Also, there should be a way to work around this. 
+//RWStructuredBuffer<float> _Charges;
+//RWStructuredBuffer<float3> _ChargePositions;
 
 float3 _OriginPosition;
 // The coordinates of the Graph transform
@@ -37,6 +37,8 @@ int IDToIndex(float3 id)
     return id.x + _SideLength * id.y + _SideLength * _SideLength * id.z;
 }
 
+
+
 // Make an id -> index function and rewrite everything in terms of just index? 
 // Then we could put the bounds check in the kernel.
 void IDToPosition(float3 id)
@@ -45,14 +47,11 @@ void IDToPosition(float3 id)
 	{
         _Positions[IDToIndex(id)] =	id * _Spacing + _OriginPosition;
 	} // I really hope this is right. 
-	
-	// Should we add offsets to these?  
 }
 
-void FieldStrength(float index)
-{
-	float3 result = 0;
-	float3 position = _Positions[index];
+
+
+float3 Coulomb(float3 position) {
 	for (int i = 0; i < _NumberOfCharges; i++)
 	{
 		float3 displacement = position - _ChargePositions[i];
@@ -60,14 +59,29 @@ void FieldStrength(float index)
 
 		result += _CoulombConstant * _Charges[i] * displacement / (pow(distance, 3));
 	}
-	// Renormalizing...
-	result *= 1e-10;
-	float result_mag = sqrt(result.x * result.x + result.y * result.y + result.z * result.z);
-	result *= (1 - 1 / pow(result_mag + 1, 2)) / result_mag;
-	_Vectors[index] = result;
-	// We should figure out a way to do a reasonable rescaling, and then we should apply a different factor
-	// to keep the length reasonable. One candidate for final length is (-1/(len + 1) + 1).
 }
+
+
+
+float Rescale(float3 vector) {
+	// Renormalizing...
+	float vector_mag = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+	return (1 - 1 / pow(vector_mag + 1, 2)) / vector_mag;
+}
+
+
+
+void FieldStrength(float index)
+{
+	float3 result = 0;
+	float3 position = _Positions[index];
+	// result = function(position);
+	_Vectors[index] = result;
+	// result *= Rescale(result);
+	// _PlotVectors[index] = result
+} // REFACTOR IN TERMS OF THIS!!!
+
+
 
 void CalcVectors23(float index)
 { // Calculates the orthogonal vectors, given a vector.
