@@ -1,8 +1,5 @@
 ﻿#pragma kernel VectorField
 
-//float _CoulombConstant;
-
-// Buffer indices: [id.x + _SideLength * id.y + _SideLength * _SideLength * id.z]
 // The buffer storing the positions
 RWStructuredBuffer<float3> _Positions;
 
@@ -10,16 +7,16 @@ RWStructuredBuffer<float3> _Positions;
 RWStructuredBuffer<float3> _Vectors;
 // It's set every frame by the C# script.
 
+// The rescaled version of the vector field
+RWStructuredBuffer<float3> _PlotVectors;
 // Buffers that store the other coordinate axes
 RWStructuredBuffer<float3> _Vectors2;
 RWStructuredBuffer<float3> _Vectors3;
 
-//int _NumberOfCharges; // Type? Also, there should be a way to work around this. 
-//RWStructuredBuffer<float> _Charges;
-//RWStructuredBuffer<float3> _ChargePositions;
-
 float3 _OriginPosition;
 // The coordinates of the Graph transform
+float3 _CenterPosition;
+// How do we deal with offset centers...
 
 int _SideLength; // kind of necessary because of the cubic thread setup? or is there a workaround with groups?
 // int shift;
@@ -39,26 +36,42 @@ int IDToIndex(float3 id)
 
 
 
-// Make an id -> index function and rewrite everything in terms of just index? 
-// Then we could put the bounds check in the kernel.
+#include FieldLibrary.hlsl
+// Here's the bits that are going to be in FieldLibrary. I'll move them once I know they work. 
+// BEGIN: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+interface FieldInterface {
+	float3 Field(float3 position);
+}
+
+// class Coulomb : FieldInterface {
+// 	float3 Field(float3 position) {
+// 		for (int i = 0; i < _NumberOfCharges; i++)
+// 		{
+// 			float3 displacement = position - _ChargePositions[i];
+// 			float distance = sqrt(displacement.x * displacement.x + displacement.y * displacement.y + displacement.z * displacement.z);
+// 			return _CoulombConstant * _Charges[i] * displacement / (pow(distance, 3));
+// 		}
+// 	}
+// }
+
+class Outwards : FieldInterface {
+	float3 Field(float3 position) {
+		return position - _CenterPosition;
+	}
+}
+
+// END: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+// Restate this just as "Calculate Position"
 void IDToPosition(float3 id)
 {
 	if (id.x < _SideLength && id.y < _SideLength && id.z < _SideLength)
 	{
         _Positions[IDToIndex(id)] =	id * _Spacing + _OriginPosition;
 	} // I really hope this is right. 
-}
-
-
-
-float3 Coulomb(float3 position) {
-	for (int i = 0; i < _NumberOfCharges; i++)
-	{
-		float3 displacement = position - _ChargePositions[i];
-		float distance = sqrt(displacement.x * displacement.x + displacement.y * displacement.y + displacement.z * displacement.z);
-
-		result += _CoulombConstant * _Charges[i] * displacement / (pow(distance, 3));
-	}
 }
 
 
@@ -77,9 +90,9 @@ void FieldStrength(float index)
 	float3 position = _Positions[index];
 	// result = function(position);
 	_Vectors[index] = result;
-	// result *= Rescale(result);
-	// _PlotVectors[index] = result
-} // REFACTOR IN TERMS OF THIS!!!
+	result *= Rescale(result);
+	_PlotVectors[index] = result
+} // REFACTOR IN TERMS OF _PlotVectors!!!
 
 
 
@@ -87,7 +100,7 @@ void CalcVectors23(float index)
 { // Calculates the orthogonal vectors, given a vector.
 	// The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.
 	// Please find a different way to do this. 
-	float3 vect = _Vectors[index];
+	float3 vect = _PlotVectors[index];
 	float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
 	float3 vect_2;
 	float3 vect_3;
@@ -134,7 +147,6 @@ void CalcVectors23(float index)
 [numthreads(4, 4, 4)]
 void VectorField(uint3 id : SV_DispatchThreadID)
 {
-	// shift = floor(_SideLength / 2.0);
     if (id.x < (uint) _SideLength && id.y < (uint) _SideLength && id.z < (uint) _SideLength)
     {
         float index = IDToIndex(id);

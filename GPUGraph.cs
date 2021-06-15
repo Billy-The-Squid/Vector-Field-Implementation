@@ -6,19 +6,15 @@ public class GPUGraph : MonoBehaviour
     int sideLength = 1;
     [SerializeField]
     float spacing = 1;
-    //int numCharges;
+
 
     Vector3 originPosition;
 
-    //[SerializeField]
-    //const float coulombConstant = 8.9875517923e9f; // J m / C^2
-
     ComputeBuffer positionsBuffer,
         vectorsBuffer,  // Should we instead use registers to globally bind these extra buffers?
+        plotVectorsBuffer, 
         vector2Buffer,
         vector3Buffer;
-        //chargesBuffer,
-        //chargePositionsBuffer;
 
     [SerializeField]
     ComputeShader computeShader;
@@ -30,24 +26,17 @@ public class GPUGraph : MonoBehaviour
         sideLengthID = Shader.PropertyToID("_SideLength"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
         vectorBufferID = Shader.PropertyToID("_Vectors"),
+        plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
         vector2BufferID = Shader.PropertyToID("_Vectors2"),
-        vector3BufferID = Shader.PropertyToID("_Vectors3"),
-        //numChargesID = Shader.PropertyToID("_NumberOfCharges"),
-        //chargesID = Shader.PropertyToID("_Charges"),
-        //chargePositionsID = Shader.PropertyToID("_ChargePositions");
+        vector3BufferID = Shader.PropertyToID("_Vectors3");
     // Include the properties of the shader that we need to be able to update here. 
 
     [SerializeField]
     Material material;
-    // Should these two be different for a blender file?
     [SerializeField]
     Mesh mesh;
     [SerializeField]
     Transform prefab;
-
-    //Charge[] chargeArray;  // The actual charge GameObjects,
-    //float[] charges;           // their charges, 
-    //Vector3[] chargePositions; // and their positions.
 
 
 
@@ -65,9 +54,6 @@ public class GPUGraph : MonoBehaviour
             vectorsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3)); // last arg: size of single object
             vector2Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
             vector3Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
-            //chargesBuffer = new ComputeBuffer(20, sizeof(float));
-            //// This is a hard limit, but it'd be nice if we could dynamically increase the buffer size. 
-            //chargePositionsBuffer = new ComputeBuffer(20, sizeof(Vector3));
         }
     }
     private void OnDisable()
@@ -83,12 +69,6 @@ public class GPUGraph : MonoBehaviour
 
         vector3Buffer.Release();
         vector3Buffer = null;
-
-        //chargesBuffer.Release();
-        //chargesBuffer = null;
-
-        //chargePositionsBuffer.Release();
-        //chargePositionsBuffer = null;
     }
 
 
@@ -96,19 +76,6 @@ public class GPUGraph : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //chargeArray = FindObjectsOfType<Charge>();
-        //numCharges = chargeArray.Length;
-
-        //charges = new float[chargeArray.Length];
-        //chargePositions = new Vector3[chargeArray.Length];
-
-        //for (int i = 0; i < chargeArray.Length; i++)
-        //{
-        //    Charge charge = chargeArray[i];
-        //    charges[i] = charge.GetComponent<Charge>().charge;
-        //    chargePositions[i] = charge.GetComponent<Transform>().localPosition;
-        //}
-
         UpdateGPU();
     }
 
@@ -117,7 +84,6 @@ public class GPUGraph : MonoBehaviour
     void UpdateGPU()
     {
         // The data is sent to the computeShader for calculation %%%%%%%%%
-        //computeShader.SetFloat(coulombID, coulombConstant);
         computeShader.SetInt(sideLengthID, sideLength);
         computeShader.SetFloat(spacingID, spacing);
         computeShader.SetVector(originID, originPosition);
@@ -126,14 +92,7 @@ public class GPUGraph : MonoBehaviour
         computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
         computeShader.SetBuffer(0, vector2BufferID, vector2Buffer);
         computeShader.SetBuffer(0, vector3BufferID, vector3Buffer);
-        //computeShader.SetInt(numChargesID, numCharges);
-        //computeShader.SetBuffer(0, chargesID, chargesBuffer);
-        //computeShader.SetBuffer(0, chargePositionsID, chargePositionsBuffer);
         // Why does this need to be redone every frame?
-
-        // Sending actual values to a couple of these buffers. 
-        //chargesBuffer.SetData(charges);
-        //chargePositionsBuffer.SetData(chargePositions);
 
         // This does the math and stores information in the positionsBuffer. %%%%%%%%%
         int numGroups = Mathf.CeilToInt(sideLength / 4f); // Why this?
