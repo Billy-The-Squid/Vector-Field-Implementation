@@ -32,17 +32,18 @@ float _Spacing;
 int IDToIndex(float3 id)
 {
     return id.x + _SideLength * id.y + _SideLength * _SideLength * id.z;
-}
+};
 
 
 
-#include FieldLibrary.hlsl
+#include "FieldLibrary.hlsl"
 // Here's the bits that are going to be in FieldLibrary. I'll move them once I know they work. 
 // BEGIN: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-interface FieldInterface {
-	float3 Field(float3 position);
-}
+interface FieldInterface
+{
+    float3 Field(float3 position);
+};
 
 // class Coulomb : FieldInterface {
 // 	float3 Field(float3 position) {
@@ -55,11 +56,13 @@ interface FieldInterface {
 // 	}
 // }
 
-class Outwards : FieldInterface {
-	float3 Field(float3 position) {
-		return position - _CenterPosition;
-	}
-}
+class Outwards : FieldInterface
+{
+    float3 Field(float3 position)
+    {
+        return position - _CenterPosition;
+    }
+};
 
 // END: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -68,31 +71,31 @@ class Outwards : FieldInterface {
 // Restate this just as "Calculate Position"
 void IDToPosition(float3 id)
 {
-	if (id.x < _SideLength && id.y < _SideLength && id.z < _SideLength)
-	{
-        _Positions[IDToIndex(id)] =	id * _Spacing + _OriginPosition;
-	} // I really hope this is right. 
-}
+    if (id.x < _SideLength && id.y < _SideLength && id.z < _SideLength)
+    {
+        _Positions[IDToIndex(id)] = id * _Spacing + _OriginPosition;
+    } // I really hope this is right. 
+};
 
 
 
-float Rescale(float3 vector) {
+float Rescale(float3 vect) {
 	// Renormalizing...
-	float vector_mag = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
-	return (1 - 1 / pow(vector_mag + 1, 2)) / vector_mag;
-}
+	float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+    return (1 - 1 / pow(vect_mag + 1, 2)) / (vect_mag + 0.000000001);
+};
 
 
 
-void FieldStrength(float index)
+void FieldStrength(float index, FieldInterface field)
 {
-	float3 result = 0;
-	float3 position = _Positions[index];
-	// result = function(position);
-	_Vectors[index] = result;
-	result *= Rescale(result);
-	_PlotVectors[index] = result
-} // REFACTOR IN TERMS OF _PlotVectors!!!
+    float3 result = 0;
+    float3 position = _Positions[index];
+	result = field.Field(position);
+    _Vectors[index] = result;
+    result *= Rescale(result);
+    _PlotVectors[index] = result;
+}; // REFACTOR IN TERMS OF _PlotVectors!!!
 
 
 
@@ -100,58 +103,59 @@ void CalcVectors23(float index)
 { // Calculates the orthogonal vectors, given a vector.
 	// The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.
 	// Please find a different way to do this. 
-	float3 vect = _PlotVectors[index];
-	float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
-	float3 vect_2;
-	float3 vect_3;
-	if (vect.x == 0.0 && vect.y == 0.0 && vect.z == 0.0)
-	{   // Check whether we should just make the mesh disappear. 
-		_Vectors2[index] = float3(0.0, 0.0, 0.0);
-		_Vectors3[index] = float3(0.0, 0.0, 0.0);
-		return;
-	}
+    float3 vect = _PlotVectors[index];
+    float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+    float3 vect_2;
+    float3 vect_3;
+    if (vect.x == 0.0 && vect.y == 0.0 && vect.z == 0.0)
+    { // Check whether we should just make the mesh disappear. 
+        _Vectors2[index] = float3(0.0, 0.0, 0.0);
+        _Vectors3[index] = float3(0.0, 0.0, 0.0);
+        return;
+    }
 	
 	// Depending on how the material works and if the trans. matrix needs to scale, NORMALIZE VECT HERE.
-	if ((vect.x == 0.0) && (vect.y == 0.0))
-	{ // Guaranteeing that vect_2 isn't parallel with vect with 
-		vect_2.x = 0.0;
-		vect_2.y = -vect.z;
-		vect_2.z = vect.y;
-	}
-	else
-	{
-		vect_2.x = vect.y;
-		vect_2.y = -vect.x;
-		vect_2.z = 0.0;
-	}
+    if ((vect.x == 0.0) && (vect.y == 0.0))
+    { // Guaranteeing that vect_2 isn't parallel with vect with 
+        vect_2.x = 0.0;
+        vect_2.y = -vect.z;
+        vect_2.z = vect.y;
+    }
+    else
+    {
+        vect_2.x = vect.y;
+        vect_2.y = -vect.x;
+        vect_2.z = 0.0;
+    }
 
 	// Re-magnituding vect_2
-	float vect_2_mag = sqrt(vect_2.x * vect_2.x + vect_2.y * vect_2.y + vect_2.z * vect_2.z);
-	vect_2 *= (vect_mag / vect_2_mag);
+    float vect_2_mag = sqrt(vect_2.x * vect_2.x + vect_2.y * vect_2.y + vect_2.z * vect_2.z);
+    vect_2 *= (vect_mag / vect_2_mag);
 
 	// Cross product!
-	vect_3.x = vect.y * vect_2.z - vect.z * vect_2.y;
-	vect_3.y = vect.z * vect_2.x - vect.x * vect_2.z;
-	vect_3.z = vect.x * vect_2.y - vect.y * vect_2.x;
+    vect_3.x = vect.y * vect_2.z - vect.z * vect_2.y;
+    vect_3.y = vect.z * vect_2.x - vect.x * vect_2.z;
+    vect_3.z = vect.x * vect_2.y - vect.y * vect_2.x;
 
 	// Re-magnituding vect_3
-	float vect_3_mag = sqrt(vect_3.x * vect_3.x + vect_3.y * vect_3.y + vect_3.z * vect_3.z);
-	vect_3 *= (vect_mag / vect_3_mag);
+    float vect_3_mag = sqrt(vect_3.x * vect_3.x + vect_3.y * vect_3.y + vect_3.z * vect_3.z);
+    vect_3 *= (vect_mag / vect_3_mag);
 	
-	_Vectors2[index] = vect_2;
-	_Vectors3[index] = vect_3;
-}
+    _Vectors2[index] = vect_2;
+    _Vectors3[index] = vect_3;
+};
 
 
 
 [numthreads(4, 4, 4)]
 void VectorField(uint3 id : SV_DispatchThreadID)
 {
+    Outwards field;
     if (id.x < (uint) _SideLength && id.y < (uint) _SideLength && id.z < (uint) _SideLength)
     {
         float index = IDToIndex(id);
         IDToPosition(id);
-        FieldStrength(index);
+        FieldStrength(index, field);
         CalcVectors23(index);
     }
-}
+};

@@ -52,6 +52,7 @@ public class GPUGraph : MonoBehaviour
         {
             positionsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
             vectorsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3)); // last arg: size of single object
+            plotVectorsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
             vector2Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
             vector3Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
         }
@@ -63,6 +64,9 @@ public class GPUGraph : MonoBehaviour
 
         vectorsBuffer.Release();
         vectorsBuffer = null;
+
+        plotVectorsBuffer.Release();
+        plotVectorsBuffer = null;
 
         vector2Buffer.Release();
         vector2Buffer = null;
@@ -90,6 +94,7 @@ public class GPUGraph : MonoBehaviour
 
         computeShader.SetBuffer(0, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
+        computeShader.SetBuffer(0, plotVectorsBufferID, plotVectorsBuffer);
         computeShader.SetBuffer(0, vector2BufferID, vector2Buffer);
         computeShader.SetBuffer(0, vector3BufferID, vector3Buffer);
         // Why does this need to be redone every frame?
