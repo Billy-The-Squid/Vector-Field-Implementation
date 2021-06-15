@@ -53,7 +53,7 @@ public class GPUGraph : MonoBehaviour
     {
         // sideLength = 2 * size + 1;
         originPosition = transform.position;
-        centerPosition = originPosition + new Vector3(xLength, yLength, zLength) * 0.5f * spacing;
+        centerPosition = originPosition + new Vector3(xLength - 1, yLength - 1, zLength - 1) * 0.5f * spacing;
         int volume = xLength * yLength * zLength;
 
         unsafe // This could maybe be a source of problems.
