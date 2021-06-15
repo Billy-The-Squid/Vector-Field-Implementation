@@ -16,7 +16,7 @@ void ConfigureProcedural ()
 		float4x4 transformation = 0.0; 
 		transformation._m33 = 1.0;
 		float3 position = _Positions[unity_InstanceID];
-		float3 vect = _Vectors[unity_InstanceID];
+		float3 vect = _PlotVectors[unity_InstanceID];
 		// Where'd this index come from?
 		float3 vect_2 = _Vectors2[unity_InstanceID];
 		float3 vect_3 = _Vectors3[unity_InstanceID];
