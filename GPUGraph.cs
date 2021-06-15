@@ -53,15 +53,16 @@ public class GPUGraph : MonoBehaviour
     {
         // sideLength = 2 * size + 1;
         originPosition = transform.position;
-        centerPosition = originPosition + vector3Buffer(xLength, yLength, zLength) * 0.5f * spacing;
+        centerPosition = originPosition + new Vector3(xLength, yLength, zLength) * 0.5f * spacing;
+        int volume = xLength * yLength * zLength;
 
         unsafe // This could maybe be a source of problems.
         {
-            positionsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
-            vectorsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3)); // last arg: size of single object
-            plotVectorsBuffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
-            vector2Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
-            vector3Buffer = new ComputeBuffer((int)Mathf.Pow(sideLength, 3), sizeof(Vector3));
+            positionsBuffer = new ComputeBuffer(volume, sizeof(Vector3));
+            vectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3)); // last arg: size of single object
+            plotVectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3));
+            vector2Buffer = new ComputeBuffer(volume, sizeof(Vector3));
+            vector3Buffer = new ComputeBuffer(volume, sizeof(Vector3));
         }
     }
     private void OnDisable()
@@ -122,9 +123,9 @@ public class GPUGraph : MonoBehaviour
         material.SetBuffer(vector3BufferID, vector3Buffer);
 
         // Here should be information about bounds and a call to draw...
-        var bounds = new Bounds(transform.position + 0.5f * Vector3.one * (sideLength + 1) * spacing, 
-            transform.position + Vector3.one * (sideLength + 1) * spacing);
+        var bounds = new Bounds(centerPosition, 
+            2 * centerPosition - originPosition);
         // This boundary needs revision
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, (int)Mathf.Pow(sideLength, 3));
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, xLength * yLength * zLength);
     }
 }
