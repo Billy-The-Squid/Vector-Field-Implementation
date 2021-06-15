@@ -106,6 +106,7 @@ public class GPUGraph : MonoBehaviour
         // Then the data from the computeShader is sent to the shader to be rendered. %%%%%%%%
         material.SetBuffer(positionsBufferID, positionsBuffer);
         material.SetBuffer(vectorBufferID, vectorsBuffer);
+        material.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
         material.SetBuffer(vector2BufferID, vector2Buffer);
         material.SetBuffer(vector3BufferID, vector3Buffer);
 
