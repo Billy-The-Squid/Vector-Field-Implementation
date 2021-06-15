@@ -101,6 +101,10 @@ public class GPUGraph : MonoBehaviour
         computeShader.SetVector(originID, originPosition);
         computeShader.SetVector(centerID, centerPosition);
 
+        computeShader.SetInt(xLengthID, xLength);
+        computeShader.SetInt(yLengthID, yLength);
+        computeShader.SetInt(zLengthID, zLength);
+
         computeShader.SetBuffer(0, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
         computeShader.SetBuffer(0, plotVectorsBufferID, plotVectorsBuffer);
