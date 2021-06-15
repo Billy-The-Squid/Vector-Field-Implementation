@@ -2,13 +2,15 @@
 
 public class GPUGraph : MonoBehaviour
 {
+    // [SerializeField, Min(1)]
+    // int sideLength = 1;
     [SerializeField, Min(1)]
-    int sideLength = 1;
+    int xLength = 1, yLength = 1, zLength = 1;
     [SerializeField]
     float spacing = 1;
 
 
-    Vector3 originPosition;
+    Vector3 originPosition, centerPosition;
 
     ComputeBuffer positionsBuffer,
         vectorsBuffer,  // Should we instead use registers to globally bind these extra buffers?
@@ -23,7 +25,11 @@ public class GPUGraph : MonoBehaviour
         //coulombID = Shader.PropertyToID("_CoulombConstant"),
         spacingID = Shader.PropertyToID("_Spacing"),
         originID = Shader.PropertyToID("_OriginPosition"),
-        sideLengthID = Shader.PropertyToID("_SideLength"),
+        centerID = Shader.PropertyToID("_CenterPosition"),
+        // sideLengthID = Shader.PropertyToID("_SideLength"),
+        xLengthID = Shader.PropertyToID("_XLength"),
+        YLengthID = Shader.PropertyToID("_YLength"),
+        ZLengthID = Shader.PropertyToID("_ZLength"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
         vectorBufferID = Shader.PropertyToID("_Vectors"),
         plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
@@ -47,6 +53,7 @@ public class GPUGraph : MonoBehaviour
     {
         // sideLength = 2 * size + 1;
         originPosition = transform.position;
+        centerPosition = originPosition + vector3Buffer(xLength, yLength, zLength) * 0.5f * spacing;
 
         unsafe // This could maybe be a source of problems.
         {
@@ -88,9 +95,10 @@ public class GPUGraph : MonoBehaviour
     void UpdateGPU()
     {
         // The data is sent to the computeShader for calculation %%%%%%%%%
-        computeShader.SetInt(sideLengthID, sideLength);
+        // computeShader.SetInt(sideLengthID, sideLength);
         computeShader.SetFloat(spacingID, spacing);
         computeShader.SetVector(originID, originPosition);
+        computeShader.SetVector(centerID, centerPosition);
 
         computeShader.SetBuffer(0, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
@@ -100,8 +108,11 @@ public class GPUGraph : MonoBehaviour
         // Why does this need to be redone every frame?
 
         // This does the math and stores information in the positionsBuffer. %%%%%%%%%
-        int numGroups = Mathf.CeilToInt(sideLength / 4f); // Why this?
-        computeShader.Dispatch(0, numGroups, numGroups, numGroups);
+        // int numGroups = Mathf.CeilToInt(sideLength / 4f); // Why this?
+        int XGroups = Mathf.CeilToInt(xLength / 4f);
+        int YGroups = Mathf.CeilToInt(yLength / 4f);
+        int ZGroups = Mathf.CeilToInt(zLength / 4f);
+        computeShader.Dispatch(0, XGroups, YGroups, ZGroups);
 
         // Then the data from the computeShader is sent to the shader to be rendered. %%%%%%%%
         material.SetBuffer(positionsBufferID, positionsBuffer);
