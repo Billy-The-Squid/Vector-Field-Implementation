@@ -5,7 +5,7 @@ public class GPUGraph : MonoBehaviour
     // [SerializeField, Min(1)]
     // int sideLength = 1;
     [SerializeField, Min(1)]
-    int xLength = 1, yLength = 1, zLength = 1;
+    int xLength = 2, yLength = 2, zLength = 2;
     [SerializeField]
     float spacing = 1;
 
