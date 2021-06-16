@@ -2,8 +2,6 @@
 
 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
 	StructuredBuffer<float3> _Positions;
-	StructuredBuffer<float> _Magnitudes;
-	// StructuredBuffer<float3> _Vectors;
 	StructuredBuffer<float3> _PlotVectors;
 	StructuredBuffer<float3> _Vectors2;
 	StructuredBuffer<float3> _Vectors3;

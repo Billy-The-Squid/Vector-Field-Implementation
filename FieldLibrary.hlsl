@@ -1,5 +1,3 @@
-// BEGIN: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 interface FieldInterface
 {
     float3 Field(float3 position);
@@ -23,5 +21,3 @@ class Outwards : FieldInterface
         return position -_CenterPosition;
     }
 };
-
-// END: FieldLibrary %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
