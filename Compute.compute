@@ -12,6 +12,8 @@ RWStructuredBuffer<float3> _PlotVectors;
 // Buffers that store the other coordinate axes
 RWStructuredBuffer<float3> _Vectors2;
 RWStructuredBuffer<float3> _Vectors3;
+// Magnitudes
+RWStructuredBuffer<float> _Magnitudes;
 
 float3 _OriginPosition;
 // The coordinates of the Graph transform
@@ -49,9 +51,17 @@ void CalculatePosition(float3 id)
 
 
 
-float Rescale(float3 vect) {
+float CalculateMagnitudes(float index) {
+    float3 vect = _Vectors[index];
+    float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+    _Magnitudes[index] = vect_mag;
+    return vect_mag;
+}
+
+
+
+float Rescale(float vect_mag) {
 	// Renormalizing...
-	float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
     return _Spacing * (1 - 1 / pow(vect_mag + 1, 2)) / (vect_mag + 0.000000001);
 };
 
@@ -63,9 +73,10 @@ void FieldStrength(float index, FieldInterface field)
     float3 position = _Positions[index];
 	result = field.Field(position);
     _Vectors[index] = result;
-    result *= Rescale(result);
+    float res_mag = CalculateMagnitudes(index);
+    result *= Rescale(res_mag);
     _PlotVectors[index] = result;
-}; // REFACTOR IN TERMS OF _PlotVectors!!!
+};
 
 
 

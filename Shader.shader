@@ -21,6 +21,11 @@ Shader "Vectors/Shader"
 		// This is where the work of calculating transformations is done. 
 		#include "PointsPlot.hlsl"
 
+		// #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
+		// 	void ConfigureSurface()
+		// This is embarrassing---I've got no idea how to do this. 
+		// #endif
+
 		// This is temporary! %%%%%%%%%% 
 		struct Input
 		{
