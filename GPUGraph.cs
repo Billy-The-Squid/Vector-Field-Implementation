@@ -10,7 +10,8 @@ public class GPUGraph : MonoBehaviour
     float spacing = 1;
 
 
-    Vector3 originPosition, centerPosition;
+    Vector3 originPosition; 
+    public Vector3 centerPosition; // FIGURE OUT GET/SET
 
     ComputeBuffer positionsBuffer,
         vectorsBuffer,  // Should we instead use registers to globally bind these extra buffers?
