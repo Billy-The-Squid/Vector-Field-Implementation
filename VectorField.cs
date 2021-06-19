@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(ZoneManager))]
 public class VectorField : MonoBehaviour
 {
     // [SerializeField, Min(1)]
