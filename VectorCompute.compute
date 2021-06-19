@@ -1,4 +1,5 @@
-﻿#pragma kernel VectorField
+﻿#pragma kernel OutwardsField
+#pragma kernel SwirlField
 
 // The buffer storing the positions
 RWStructuredBuffer<float3> _Positions;
@@ -105,19 +106,18 @@ void CalcVectors23(float index)
 };
 
 
-
-[numthreads(64, 1, 1)]
-void VectorField(uint3 id : SV_DispatchThreadID)
-{
-    Outwards field;
-    // Check only that id is still within positions buffer. 
-    uint bufferSize;
-    uint stride;
-    _Positions.GetDimensions(bufferSize, stride);
-
-    if (id.x < bufferSize)
-    {
-        FieldStrength(id.x, field);
-        CalcVectors23(id.x);
+#define KERNEL_NAME(fieldName) \
+    [numthreads(64, 1, 1)] \
+    void fieldName##Field(uint3 id : SV_DispatchThreadID) { \
+        fieldName field; \
+        uint bufferSize; \
+        uint stride; \
+        _Positions.GetDimensions(bufferSize, stride); \
+        if (id.x < bufferSize) { \
+            FieldStrength(id.x, field); \
+            CalcVectors23(id.x); \
+        } \
     }
-};
+
+KERNEL_NAME(Outwards)
+KERNEL_NAME(Swirl) 

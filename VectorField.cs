@@ -28,7 +28,8 @@ public class VectorField : MonoBehaviour
         vector2BufferID = Shader.PropertyToID("_Vectors2"),
         vector3BufferID = Shader.PropertyToID("_Vectors3"),
         magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
-        maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength");
+        maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength"),
+        fieldIndexID = Shader.PropertyToID("_FieldIndex");
     // Include the properties of the shader that we need to be able to update here. 
 
     [SerializeField]
@@ -36,6 +37,10 @@ public class VectorField : MonoBehaviour
     [SerializeField]
     Mesh mesh;
 
+    // It is the user's responsibility to make sure that these selections align with those in FieldLibrary.hlsl
+    private enum FieldType { Outwards, Swirl }
+    [SerializeField]
+    FieldType fieldType;
 
 
 
@@ -95,18 +100,20 @@ public class VectorField : MonoBehaviour
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
         computeShader.SetFloat(maxVectorLengthID, zone.maxVectorLength);
+        computeShader.SetInt(fieldIndexID, (int)fieldType);
 
-        computeShader.SetBuffer(0, positionsBufferID, positionsBuffer);
-        computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
-        computeShader.SetBuffer(0, plotVectorsBufferID, plotVectorsBuffer);
-        computeShader.SetBuffer(0, vector2BufferID, vector2Buffer);
-        computeShader.SetBuffer(0, vector3BufferID, vector3Buffer);
-        computeShader.SetBuffer(0, magnitudesBufferID, magnitudesBuffer);
+        int kernelID = (int)fieldType;
+        computeShader.SetBuffer(kernelID, positionsBufferID, positionsBuffer);
+        computeShader.SetBuffer(kernelID, vectorBufferID, vectorsBuffer);
+        computeShader.SetBuffer(kernelID, plotVectorsBufferID, plotVectorsBuffer);
+        computeShader.SetBuffer(kernelID, vector2BufferID, vector2Buffer);
+        computeShader.SetBuffer(kernelID, vector3BufferID, vector3Buffer);
+        computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
         // Why does this need to be redone every frame?
 
         // This does the math and stores information in the positionsBuffer. %%%%%%%%%
         int groups = Mathf.CeilToInt(volume / 64f);
-        computeShader.Dispatch(0, volume, 1, 1);
+        computeShader.Dispatch(kernelID, volume, 1, 1);
 
         // Then the data from the computeShader is sent to the shader to be rendered. %%%%%%%%
         material.SetBuffer(positionsBufferID, positionsBuffer);
