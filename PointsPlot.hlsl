@@ -25,8 +25,8 @@ void ConfigureProcedural ()
 		// The (0,1,0) direction should always map to where the vector is pointing. (This depends on the mesh though)
 		transformation._m02_m12_m22 = vect;
 		// Putting these back in the transformation matrix
-		transformation._m00_m10_m20 = vect_2;
-		transformation._m01_m11_m21 = vect_3;
+		transformation._m01_m11_m21 = vect_2;
+		transformation._m00_m10_m20 = -vect_3;
 		// Do I need to switch the order of these?
 	
 		// And exporting it. 
