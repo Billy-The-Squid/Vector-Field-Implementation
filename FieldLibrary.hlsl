@@ -18,6 +18,6 @@ class Outwards : FieldInterface
 {
     float3 Field(float3 position)
     {
-        return position -_CenterPosition;
+        return position;
     }
 };

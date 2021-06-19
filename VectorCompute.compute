@@ -15,39 +15,17 @@ RWStructuredBuffer<float3> _Vectors3;
 // Magnitudes
 RWStructuredBuffer<float> _Magnitudes;
 
-float3 _OriginPosition;
-// The coordinates of the Graph transform
+// The (0,0,0) point of the field
 float3 _CenterPosition;
-// How do we deal with offset centers...
 
-// int _SideLength; // kind of necessary because of the cubic thread setup? or is there a workaround with groups?
-// int shift;
-int _XLength, _YLength, _ZLength;
-// The number of points in each direction
-float _Spacing;
-// The distance between neighboring field points
+// maximum length a displayed vector can have
+float _MaxVectorLength;
 
-
-
-
-
-int IDToIndex(float3 id)
-{
-    return id.x + _XLength * id.y + _XLength * _YLength * id.z;
-};
 
 
 
 #include "FieldLibrary.hlsl"
 
-
-
-// Restate this just as "Calculate Position"
-void CalculatePosition(float3 id)
-{
-    _Positions[IDToIndex(id)] = id * _Spacing + _OriginPosition;
-    // I really hope this is right. 
-};
 
 
 
@@ -62,7 +40,7 @@ float CalculateMagnitudes(float index) {
 
 float Rescale(float vect_mag) {
 	// Renormalizing...
-    return _Spacing * (1 - 1 / pow(vect_mag + 1, 2)) / (vect_mag + 0.000000001);
+    return _MaxVectorLength * (1 - 1 / pow(vect_mag + 1, 2)) / (vect_mag + 0.000000001);
 };
 
 
@@ -71,7 +49,7 @@ void FieldStrength(float index, FieldInterface field)
 {
     float3 result = 0;
     float3 position = _Positions[index];
-	result = field.Field(position);
+	result = field.Field(position - _CenterPosition);
     _Vectors[index] = result;
     float res_mag = CalculateMagnitudes(index);
     result *= Rescale(res_mag);
@@ -128,15 +106,18 @@ void CalcVectors23(float index)
 
 
 
-[numthreads(4, 4, 4)]
+[numthreads(64, 1, 1)]
 void VectorField(uint3 id : SV_DispatchThreadID)
 {
     Outwards field;
-    if (id.x < (uint) _XLength && id.y < (uint) _YLength && id.z < (uint) _ZLength)
+    // Check only that id is still within positions buffer. 
+    uint bufferSize;
+    uint stride;
+    _Positions.GetDimensions(bufferSize, stride);
+
+    if (id.x < bufferSize)
     {
-        float index = IDToIndex(id);
-        CalculatePosition(id);
-        FieldStrength(index, field);
-        CalcVectors23(index);
+        FieldStrength(id.x, field);
+        CalcVectors23(id.x);
     }
 };

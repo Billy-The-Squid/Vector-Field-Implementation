@@ -2,19 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(ZoneManager))]
+[RequireComponent(typeof(FieldZone))]
 public class VectorField : MonoBehaviour
 {
-    // [SerializeField, Min(1)]
-    // int sideLength = 1;
-    [SerializeField, Min(1)]
-    int xLength = 2, yLength = 2, zLength = 2;
     [SerializeField]
-    float spacing = 1;
-
-
-    Vector3 originPosition;
-    public Vector3 centerPosition; // FIGURE OUT GET/SET
+    public FieldZone zone { get; protected set; }
 
     ComputeBuffer positionsBuffer,
         vectorsBuffer,  // Should we instead use registers to globally bind these extra buffers?
@@ -23,32 +15,26 @@ public class VectorField : MonoBehaviour
         vector3Buffer,
         magnitudesBuffer;
 
+    int volume;
+
     [SerializeField]
     ComputeShader computeShader;
 
     static readonly int
-        //coulombID = Shader.PropertyToID("_CoulombConstant"),
-        spacingID = Shader.PropertyToID("_Spacing"),
-        originID = Shader.PropertyToID("_OriginPosition"),
         centerID = Shader.PropertyToID("_CenterPosition"),
-        // sideLengthID = Shader.PropertyToID("_SideLength"),
-        xLengthID = Shader.PropertyToID("_XLength"),
-        yLengthID = Shader.PropertyToID("_YLength"),
-        zLengthID = Shader.PropertyToID("_ZLength"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
         vectorBufferID = Shader.PropertyToID("_Vectors"),
         plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
         vector2BufferID = Shader.PropertyToID("_Vectors2"),
         vector3BufferID = Shader.PropertyToID("_Vectors3"),
-        magnitudesBufferID = Shader.PropertyToID("_Magnitudes");
+        magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
+        maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength");
     // Include the properties of the shader that we need to be able to update here. 
 
     [SerializeField]
     Material material;
     [SerializeField]
     Mesh mesh;
-    [SerializeField]
-    Transform prefab;
 
 
 
@@ -57,14 +43,17 @@ public class VectorField : MonoBehaviour
 
     private void OnEnable()
     {
-        // sideLength = 2 * size + 1;
-        originPosition = transform.position;
-        centerPosition = originPosition + new Vector3(xLength - 1, yLength - 1, zLength - 1) * 0.5f * spacing;
-        int volume = xLength * yLength * zLength;
+        if(zone == null) {
+            zone = GetComponent<FieldZone>();
+        }
+
+        zone.SetPositions();
+
+        positionsBuffer = zone.positionBuffer;
+        volume = positionsBuffer.count;
 
         unsafe // This could maybe be a source of problems.
         {
-            positionsBuffer = new ComputeBuffer(volume, sizeof(Vector3));
             vectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3)); // last arg: size of single object
             plotVectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3));
             vector2Buffer = new ComputeBuffer(volume, sizeof(Vector3));
@@ -72,11 +61,9 @@ public class VectorField : MonoBehaviour
             magnitudesBuffer = new ComputeBuffer(volume, sizeof(float));
         }
     }
+
     private void OnDisable()
     {
-        positionsBuffer.Release();
-        positionsBuffer = null;
-
         vectorsBuffer.Release();
         vectorsBuffer = null;
 
@@ -105,15 +92,9 @@ public class VectorField : MonoBehaviour
 
     void UpdateGPU()
     {
-        // The data is sent to the computeShader for calculation %%%%%%%%%
-        // computeShader.SetInt(sideLengthID, sideLength);
-        computeShader.SetFloat(spacingID, spacing);
-        computeShader.SetVector(originID, originPosition);
-        computeShader.SetVector(centerID, centerPosition);
-
-        computeShader.SetInt(xLengthID, xLength);
-        computeShader.SetInt(yLengthID, yLength);
-        computeShader.SetInt(zLengthID, zLength);
+        // The data is sent to the computeShader for calculation
+        computeShader.SetVector(centerID, zone.fieldOrigin);
+        computeShader.SetFloat(maxVectorLengthID, zone.maxVectorLength);
 
         computeShader.SetBuffer(0, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(0, vectorBufferID, vectorsBuffer);
@@ -124,24 +105,18 @@ public class VectorField : MonoBehaviour
         // Why does this need to be redone every frame?
 
         // This does the math and stores information in the positionsBuffer. %%%%%%%%%
-        // int numGroups = Mathf.CeilToInt(sideLength / 4f); // Why this?
-        int XGroups = Mathf.CeilToInt(xLength / 4f);
-        int YGroups = Mathf.CeilToInt(yLength / 4f);
-        int ZGroups = Mathf.CeilToInt(zLength / 4f);
-        computeShader.Dispatch(0, XGroups, YGroups, ZGroups);
+        int groups = Mathf.CeilToInt(volume / 64f);
+        computeShader.Dispatch(0, volume, 1, 1);
 
         // Then the data from the computeShader is sent to the shader to be rendered. %%%%%%%%
         material.SetBuffer(positionsBufferID, positionsBuffer);
-        // material.SetBuffer(vectorBufferID, vectorsBuffer);
         material.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
         material.SetBuffer(vector2BufferID, vector2Buffer);
         material.SetBuffer(vector3BufferID, vector3Buffer);
         material.SetBuffer(magnitudesBufferID, magnitudesBuffer);
 
         // Here should be information about bounds and a call to draw...
-        var bounds = new Bounds(centerPosition,
-            2 * centerPosition - originPosition);
-        // This boundary needs revision
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, xLength * yLength * zLength);
+        var bounds = zone.bounds;
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, volume);
     }
 }
