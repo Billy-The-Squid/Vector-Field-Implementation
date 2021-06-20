@@ -35,7 +35,7 @@ public class VectorField : MonoBehaviour
     // Include the properties of the shader that we need to be able to update here. 
 
     [SerializeField]
-    Material material;
+    public Material pointerMaterial; // { get; protected set; }
     [SerializeField]
     Mesh mesh;
 
@@ -110,7 +110,10 @@ public class VectorField : MonoBehaviour
         {
             CalculateVectors();
         }
+    }
 
+    private void LateUpdate()
+    {
         PlotResults();
     }
 
@@ -142,14 +145,14 @@ public class VectorField : MonoBehaviour
     void PlotResults()
     {
         // Then the data from the computeShader is sent to the shader to be rendered.
-        material.SetBuffer(positionsBufferID, positionsBuffer);
-        material.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
-        material.SetBuffer(vector2BufferID, vector2Buffer);
-        material.SetBuffer(vector3BufferID, vector3Buffer);
-        material.SetBuffer(magnitudesBufferID, magnitudesBuffer);
+        pointerMaterial.SetBuffer(positionsBufferID, positionsBuffer);
+        pointerMaterial.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
+        pointerMaterial.SetBuffer(vector2BufferID, vector2Buffer);
+        pointerMaterial.SetBuffer(vector3BufferID, vector3Buffer);
+        pointerMaterial.SetBuffer(magnitudesBufferID, magnitudesBuffer);
 
         // Setting the bounds and giving a draw call
         var bounds = zone.bounds;
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, numOfPoints);
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, pointerMaterial, bounds, numOfPoints);
     }
 }
