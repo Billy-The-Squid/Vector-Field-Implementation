@@ -5,20 +5,42 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public abstract class FieldZone : MonoBehaviour
 {
-    // The positions of each vector (worldspace)
+    /// <summary>
+    /// The worldspace positions of each vector.
+    /// </summary>
     public ComputeBuffer positionBuffer { get; protected set; }
+    /// <summary>
+    ///  The maximum displayed length of any vector in the field.
+    /// </summary>
     public float maxVectorLength = 1;
-    // The point for the field calculations to treat as (0,0,0) (worldspace)
-    public Vector3 fieldOrigin { get; protected set; } // Relative to the implementing object
+    /// <summary>
+    /// The worldspace point that the field calculations will treat as (0,0,0).
+    /// </summary>
+    public Vector3 fieldOrigin { get; protected set; }
+    /// <summary>
+    /// The bounds (worldspace) to be used when drawing the field.
+    /// </summary>
     public Bounds bounds { get; protected set; }
+    /// <summary>
+    /// The number of points in the position buffer.
+    /// </summary>
     protected int numberOfPoints;
 
+    /// <summary>
+    /// A triggering collider, to be used in conjuction with field detectors. 
+    /// </summary>
     [SerializeField]
     public Collider triggerCollider;
 
+    /// <summary>
+    /// Initializes the variables that will not change throughout a game session,
+    /// but which must be created before <cref>SetPositions</cref> may be called. 
+    /// </summary>
     public abstract void Initialize();
 
-    // Fills up the positionBuffer with values
+    /// <summary>
+    /// Fills <cref>positionBuffer</cref> with values. 
+    /// </summary>
     public abstract void SetPositions();
 
 
