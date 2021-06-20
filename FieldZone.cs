@@ -47,10 +47,8 @@ public abstract class FieldZone : MonoBehaviour
     
 
 
-    private void Start()
-    {
-        if(triggerCollider == null)
-        {
+    private void Start() {
+        if(triggerCollider == null) {
             triggerCollider = GetComponent<Collider>();
         }
         //triggerCollider.isTrigger = true;

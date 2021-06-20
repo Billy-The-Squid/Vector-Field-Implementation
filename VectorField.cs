@@ -3,25 +3,71 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/// <summary>
+/// This class is built to manage the interactions between the different scripts that create a vector field. 
+/// Given a FieldZone, it calls upon that for the positions of each vector to be plotted, then uses that 
+/// to calculate the value of the buffer at each point. Finally, it plots these results with GPU instancing.
+/// 
+/// Does not currently support a changing number of points. 
+/// </summary>
 [RequireComponent(typeof(FieldZone))]
 public class VectorField : MonoBehaviour
 {
-    //[SerializeField]
+    /// <summary>
+    /// The <cref>FieldZone</cref> object used to determine positions.
+    /// </summary>
     public FieldZone zone { get; set; }
+    // Why is this not serializable? %%%%%%%%%%
 
+    /// <summary>
+    /// The buffer in which the vector worldspace positions are stored.
+    /// </summary>
     public ComputeBuffer positionsBuffer { get; protected set; }
+    /// <summary>
+    /// The buffer in which the vector values are stored. 
+    /// Same indexing scheme as <cref>positionsBuffer</cref>.
+    /// </summary>
     public ComputeBuffer vectorsBuffer { get; protected set; }
+    /// <summary>
+    /// The buffer in which the visual magnitudes of each vector are stored. 
+    /// Same indexing scheme as <cref>positionsBuffer</cref>.
+    /// </summary>
     public ComputeBuffer plotVectorsBuffer { get; protected set; }
+    /// <summary>
+    /// One of two buffers in which values used for calculating the transformation matrix for vectors are stored.
+    /// Same indexing scheme as <cref>positionsBuffer</cref>.
+    /// 
+    /// Contains vectors orthogonal to those in <cref>plotVectorsBuffer</cref>, with the same magnitude, in order 
+    /// to generate an orthogonal basis. 
+    /// </summary>
     public ComputeBuffer vector2Buffer { get; protected set; }
+    /// <summary>
+    /// One of two buffers in which values used for calculating the transformation matrix for vectors are stored.
+    /// Same indexing scheme as <cref>positionsBuffer</cref>.
+    /// 
+    /// Contains vectors orthogonal to those in <cref>plotVectorsBuffer</cref>, with the same magnitude, in order 
+    /// to generate an orthogonal basis. 
+    /// </summary>
     public ComputeBuffer vector3Buffer { get; protected set; }
+    /// <summary>
+    /// Stores the magnitudes of the vectors in <cref>vectorsBuffer</cref>. 
+    /// Same indexing scheme as <cref>positionsBuffer</cref>.
+    /// </summary>
     public ComputeBuffer magnitudesBuffer { get; protected set; }
 
-
+    /// <summary>
+    /// The number of points at which vectors will be plotted and the number of values in each buffer.
+    /// </summary>
     int numOfPoints;
 
+    /// <summary>
+    /// The compute shader used to generate the vector field. 
+    /// </summary>
     [SerializeField]
     ComputeShader computeShader;
 
+    // Property IDs used to send values to various shaders.
     static readonly int
         centerID = Shader.PropertyToID("_CenterPosition"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
@@ -32,20 +78,41 @@ public class VectorField : MonoBehaviour
         magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
         maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength"),
         fieldIndexID = Shader.PropertyToID("_FieldIndex");
-    // Include the properties of the shader that we need to be able to update here. 
 
+    /// <summary>
+    /// The material used to draw the vector field. Must be capable of handling GPU instancing. 
+    /// </summary>
     [SerializeField]
-    public Material pointerMaterial; // { get; protected set; }
+    public Material pointerMaterial;
+    /// <summary>
+    /// The mesh to draw the pointers from.
+    /// </summary>
     [SerializeField]
-    Mesh mesh;
+    Mesh pointerMesh;
 
-    // It is the user's responsibility to make sure that these selections align with those in FieldLibrary.hlsl
+    /// <summary>
+    /// The possible types of field to display. 
+    /// It is the user's responsibility to make sure that these selections align with those in FieldLibrary.hlsl
+    /// </summary>
     public enum FieldType { Outwards, Swirl }
+    /// <summary>
+    /// The type of field to be displayed. Cannot be changed in Play Mode if <cref>isDynamic</cref> is set to False.
+    /// </summary>
     [SerializeField]
     public FieldType fieldType;
 
+    /// <summary>
+    /// Set this to true if the field should update when the transform is moved in Play Mode. 
+    /// Requires more GPU time. Sets <cref>isDynamic</cref> to true as well. 
+    /// </summary>
     [SerializeField]
-    bool canMove, isDynamic;
+    bool canMove;
+    /// <summary>
+    /// Set this to true if the field values should be updated each frame. 
+    /// Requires more GPU time. 
+    /// </summary>
+    [SerializeField]
+    bool isDynamic;
 
 
 
@@ -118,7 +185,9 @@ public class VectorField : MonoBehaviour
     }
 
 
-
+    /// <summary>
+    /// Interfaces with the <cref>computeShader</cref> and calculates the value of the vectors at each point, storing them in the buffers. 
+    /// </summary>
     private void CalculateVectors()
     {
         // The data is sent to the computeShader for calculation
@@ -141,7 +210,9 @@ public class VectorField : MonoBehaviour
     }
 
 
-
+    /// <summary>
+    /// Interfaces with the <cref>pointerMaterial</cref> to display the vector field. 
+    /// </summary>
     void PlotResults()
     {
         // Then the data from the computeShader is sent to the shader to be rendered.
@@ -153,6 +224,6 @@ public class VectorField : MonoBehaviour
 
         // Setting the bounds and giving a draw call
         var bounds = zone.bounds;
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, pointerMaterial, bounds, numOfPoints);
+        Graphics.DrawMeshInstancedProcedural(pointerMesh, 0, pointerMaterial, bounds, numOfPoints);
     }
 }
