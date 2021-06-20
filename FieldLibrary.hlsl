@@ -34,15 +34,5 @@ class Swirl : FieldInterface
     }
 };
 
-//// Each type of FieldInterface must be instantiated
-//Outwards outwardsField;
-//Swirl swirl;
-
-//// And that instantiation must be placed in the array (and update the size!)
-//FieldInterface fields[2] =
-//{
-//    outwardsField,
-//    swirl
-//};
-
 // Every type that's added must also be present in the enum in VectorFields.cs
+

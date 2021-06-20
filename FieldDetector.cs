@@ -5,20 +5,20 @@ using UnityEngine;
 public class FieldDetector : MonoBehaviour
 {
     protected bool inField;
-    protected VectorField field;
+    public VectorField detectedField { get; protected set; }
 
     public virtual void EnteredField(VectorField graph)
     {
         inField = true;
-        field = graph;
+        detectedField = graph;
     }
 
     public virtual void ExitedField(VectorField graph)
     {
         inField = false;
-        if(field == graph)
+        if(detectedField == graph)
         {
-            field = null;
+            detectedField = null;
         } // Better programming practice
     }
 }

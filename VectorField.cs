@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,17 +6,18 @@ using UnityEngine;
 [RequireComponent(typeof(FieldZone))]
 public class VectorField : MonoBehaviour
 {
-    [SerializeField]
-    public FieldZone zone { get; protected set; }
+    //[SerializeField]
+    public FieldZone zone { get; set; }
 
-    ComputeBuffer positionsBuffer,
-        vectorsBuffer,  // Should we instead use registers to globally bind these extra buffers?
-        plotVectorsBuffer,
-        vector2Buffer,
-        vector3Buffer,
-        magnitudesBuffer;
+    public ComputeBuffer positionsBuffer { get; protected set; }
+    public ComputeBuffer vectorsBuffer { get; protected set; }
+    public ComputeBuffer plotVectorsBuffer { get; protected set; }
+    public ComputeBuffer vector2Buffer { get; protected set; }
+    public ComputeBuffer vector3Buffer { get; protected set; }
+    public ComputeBuffer magnitudesBuffer { get; protected set; }
 
-    int volume;
+
+    int numOfPoints;
 
     [SerializeField]
     ComputeShader computeShader;
@@ -38,33 +40,42 @@ public class VectorField : MonoBehaviour
     Mesh mesh;
 
     // It is the user's responsibility to make sure that these selections align with those in FieldLibrary.hlsl
-    private enum FieldType { Outwards, Swirl }
+    public enum FieldType { Outwards, Swirl }
     [SerializeField]
-    FieldType fieldType;
+    public FieldType fieldType;
+
+    [SerializeField]
+    bool canMove, isDynamic;
 
 
 
 
+
+    private void Awake()
+    {
+        if (zone == null)
+        {
+            zone = GetComponent<FieldZone>();
+        }
+    }
 
     private void OnEnable()
     {
-        if(zone == null) {
-            zone = GetComponent<FieldZone>();
-        }
-
         zone.SetPositions();
 
         positionsBuffer = zone.positionBuffer;
-        volume = positionsBuffer.count;
+        numOfPoints = positionsBuffer.count;
 
-        unsafe // This could maybe be a source of problems.
+        unsafe // <-- This could maybe be a source of problems.
         {
-            vectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3)); // last arg: size of single object
-            plotVectorsBuffer = new ComputeBuffer(volume, sizeof(Vector3));
-            vector2Buffer = new ComputeBuffer(volume, sizeof(Vector3));
-            vector3Buffer = new ComputeBuffer(volume, sizeof(Vector3));
-            magnitudesBuffer = new ComputeBuffer(volume, sizeof(float));
+            vectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3)); // last arg: size of single object
+            plotVectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
+            vector2Buffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
+            vector3Buffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
+            magnitudesBuffer = new ComputeBuffer(numOfPoints, sizeof(float));
         }
+
+        CalculateVectors();
     }
 
     private void OnDisable()
@@ -90,12 +101,22 @@ public class VectorField : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        UpdateGPU();
+        if(canMove) {
+            zone.SetPositions();
+            isDynamic = true;
+        }
+
+        if(isDynamic)
+        {
+            CalculateVectors();
+        }
+
+        PlotResults();
     }
 
 
 
-    void UpdateGPU()
+    private void CalculateVectors()
     {
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
@@ -111,19 +132,24 @@ public class VectorField : MonoBehaviour
         computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
         // Why does this need to be redone every frame?
 
-        // This does the math and stores information in the positionsBuffer. %%%%%%%%%
-        int groups = Mathf.CeilToInt(volume / 64f);
-        computeShader.Dispatch(kernelID, volume, 1, 1);
+        // This does the math and stores information in the positionsBuffer.
+        int groups = Mathf.CeilToInt(numOfPoints / 64f);
+        computeShader.Dispatch(kernelID, groups, 1, 1);
+    }
 
-        // Then the data from the computeShader is sent to the shader to be rendered. %%%%%%%%
+
+
+    void PlotResults()
+    {
+        // Then the data from the computeShader is sent to the shader to be rendered.
         material.SetBuffer(positionsBufferID, positionsBuffer);
         material.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
         material.SetBuffer(vector2BufferID, vector2Buffer);
         material.SetBuffer(vector3BufferID, vector3Buffer);
         material.SetBuffer(magnitudesBufferID, magnitudesBuffer);
 
-        // Here should be information about bounds and a call to draw...
+        // Setting the bounds and giving a draw call
         var bounds = zone.bounds;
-        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, volume);
+        Graphics.DrawMeshInstancedProcedural(mesh, 0, material, bounds, numOfPoints);
     }
 }

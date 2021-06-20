@@ -1,6 +1,7 @@
 ﻿#pragma kernel OutwardsField
 #pragma kernel SwirlField
 
+
 // The buffer storing the positions
 RWStructuredBuffer<float3> _Positions;
 
