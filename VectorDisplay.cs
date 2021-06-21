@@ -49,9 +49,6 @@ public class VectorDisplay : Display
     [SerializeField]
     ComputeShader displayComputer;
 
-    //[System.NonSerialized]
-    //public new float maxVectorLength;
-
     private bool initialized = false;
 
 
@@ -72,7 +69,7 @@ public class VectorDisplay : Display
         initialized = true;
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         plotVectorsBuffer.Release();
         plotVectorsBuffer = null;
@@ -100,6 +97,11 @@ public class VectorDisplay : Display
         PlotResults(positionsBuffer);
     }
 
+    /// <summary>
+    /// Calculates the necessary values to display a vector. 
+    /// </summary>
+    /// <param name="positionsBuffer"></param>
+    /// <param name="vectorsBuffer"></param>
     private void CalculateDisplay(ComputeBuffer positionsBuffer, ComputeBuffer vectorsBuffer)
     {
         int kernelID = 0;
