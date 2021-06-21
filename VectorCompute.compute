@@ -1,5 +1,6 @@
 ﻿#pragma kernel OutwardsField
 #pragma kernel SwirlField
+#pragma kernel CoulombField
 
 
 // The buffer storing the positions
@@ -22,6 +23,13 @@ float3 _CenterPosition;
 
 // maximum length a displayed vector can have
 float _MaxVectorLength;
+
+// This buffer allows you to send additional vector arguments to whatever your field function is. 
+RWStructuredBuffer<float3> _VectorArgs;
+RWStructuredBuffer<float> _FloatArgs;
+// It's up to you to parse these inside the function, so you can split them into two separate arrays
+// if you choose. Just remember that not every model supports GetDimensions, so you need to figure
+// out for yourself how to stop from going out of bounds. 
 
 
 
@@ -121,4 +129,5 @@ void CalcVectors23(float index)
     }
 
 KERNEL_NAME(Outwards)
-KERNEL_NAME(Swirl) 
+KERNEL_NAME(Swirl)
+KERNEL_NAME(Coulomb)

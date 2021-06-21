@@ -55,6 +55,16 @@ public class VectorField : MonoBehaviour
     /// Same indexing scheme as <cref>positionsBuffer</cref>.
     /// </summary>
     public ComputeBuffer magnitudesBuffer { get; protected set; }
+    /// <summary>
+    /// Stores the extra vector arguments used in the computation.
+    /// Set your own indexing scheme. 
+    /// </summary>
+    public ComputeBuffer vectorArgsBuffer { get; set; }
+    /// <summary>
+    /// Stores the extra float arguments used in the computation.
+    /// Set your own indexing scheme. 
+    /// </summary>
+    public ComputeBuffer floatArgsBuffer { get; set; }
 
     /// <summary>
     /// The number of points at which vectors will be plotted and the number of values in each buffer.
@@ -75,6 +85,8 @@ public class VectorField : MonoBehaviour
         plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
         vector2BufferID = Shader.PropertyToID("_Vectors2"),
         vector3BufferID = Shader.PropertyToID("_Vectors3"),
+        floatArgsID = Shader.PropertyToID("_FloatArgs"),
+        vectorArgsID = Shader.PropertyToID("_VectorArgs"),
         magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
         maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength"),
         fieldIndexID = Shader.PropertyToID("_FieldIndex");
@@ -202,7 +214,8 @@ public class VectorField : MonoBehaviour
         computeShader.SetBuffer(kernelID, vector2BufferID, vector2Buffer);
         computeShader.SetBuffer(kernelID, vector3BufferID, vector3Buffer);
         computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
-        // Why does this need to be redone every frame?
+        computeShader.SetBuffer(kernelID, floatArgsID, floatArgsBuffer);
+        computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
 
         // This does the math and stores information in the positionsBuffer.
         int groups = Mathf.CeilToInt(numOfPoints / 64f);
