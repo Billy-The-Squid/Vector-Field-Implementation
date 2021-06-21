@@ -11,7 +11,7 @@ using UnityEngine;
 /// 
 /// Does not currently support a changing number of points. 
 /// </summary>
-[RequireComponent(typeof(FieldZone))]
+[RequireComponent(typeof(FieldZone), typeof(Display))]
 public class VectorField : MonoBehaviour
 {
     /// <summary>
@@ -86,10 +86,10 @@ public class VectorField : MonoBehaviour
         //vector2BufferID = Shader.PropertyToID("_Vectors2"),
         //vector3BufferID = Shader.PropertyToID("_Vectors3"),
         floatArgsID = Shader.PropertyToID("_FloatArgs"),
-        vectorArgsID = Shader.PropertyToID("_VectorArgs"),
+        vectorArgsID = Shader.PropertyToID("_VectorArgs");
         //magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
         //maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength"),
-        fieldIndexID = Shader.PropertyToID("_FieldIndex");
+        //fieldIndexID = Shader.PropertyToID("_FieldIndex");
 
     ///// <summary>
     ///// The material used to draw the vector field. Must be capable of handling GPU instancing. 
@@ -127,7 +127,7 @@ public class VectorField : MonoBehaviour
     bool isDynamic;
 
     [SerializeField]
-    Display display;
+    public Display display { get; protected set; }
 
 
 
@@ -138,6 +138,10 @@ public class VectorField : MonoBehaviour
         if (zone == null)
         {
             zone = GetComponent<FieldZone>();
+        }
+        if (display == null)
+        {
+            display = GetComponent<Display>();
         }
     }
 
@@ -158,24 +162,29 @@ public class VectorField : MonoBehaviour
         }
 
         CalculateVectors();
+
+        display.maxVectorLength = zone.maxVectorLength;
+        display.bounds = zone.bounds;
     }
+
+
 
     private void OnDisable()
     {
         vectorsBuffer.Release();
         vectorsBuffer = null;
 
-        plotVectorsBuffer.Release();
-        plotVectorsBuffer = null;
+        //plotVectorsBuffer.Release();
+        //plotVectorsBuffer = null;
 
-        vector2Buffer.Release();
-        vector2Buffer = null;
+        //vector2Buffer.Release();
+        //vector2Buffer = null;
 
-        vector3Buffer.Release();
-        vector3Buffer = null;
+        //vector3Buffer.Release();
+        //vector3Buffer = null;
 
-        magnitudesBuffer.Release();
-        magnitudesBuffer = null;
+        //magnitudesBuffer.Release();
+        //magnitudesBuffer = null;
     }
 
 
@@ -192,11 +201,18 @@ public class VectorField : MonoBehaviour
         {
             CalculateVectors();
         }
+
+        //// Debug code
+        Vector3[] debugArray = new Vector3[numOfPoints];
+        vectorsBuffer.GetData(debugArray);
+        Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
+        Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 
     private void LateUpdate()
     {
-        PlotResults();
+        //PlotResults();
+        display.DisplayVectors(positionsBuffer, vectorsBuffer);
     }
 
 
@@ -207,39 +223,43 @@ public class VectorField : MonoBehaviour
     {
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
-        computeShader.SetFloat(maxVectorLengthID, zone.maxVectorLength);
-        computeShader.SetInt(fieldIndexID, (int)fieldType);
+        //computeShader.SetFloat(maxVectorLengthID, zone.maxVectorLength);
+        //computeShader.SetInt(fieldIndexID, (int)fieldType);
 
         int kernelID = (int)fieldType;
         computeShader.SetBuffer(kernelID, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(kernelID, vectorBufferID, vectorsBuffer);
-        computeShader.SetBuffer(kernelID, plotVectorsBufferID, plotVectorsBuffer);
-        computeShader.SetBuffer(kernelID, vector2BufferID, vector2Buffer);
-        computeShader.SetBuffer(kernelID, vector3BufferID, vector3Buffer);
-        computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
-        computeShader.SetBuffer(kernelID, floatArgsID, floatArgsBuffer);
-        computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
-
+        //computeShader.SetBuffer(kernelID, plotVectorsBufferID, plotVectorsBuffer);
+        //computeShader.SetBuffer(kernelID, vector2BufferID, vector2Buffer);
+        //computeShader.SetBuffer(kernelID, vector3BufferID, vector3Buffer);
+        //computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
+        if(floatArgsBuffer != null) {
+            computeShader.SetBuffer(kernelID, floatArgsID, floatArgsBuffer);
+        }
+        if(vectorArgsBuffer != null) {
+            computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
+        }
+        
         // This does the math and stores information in the positionsBuffer.
         int groups = Mathf.CeilToInt(numOfPoints / 64f);
         computeShader.Dispatch(kernelID, groups, 1, 1);
     }
 
 
-    /// <summary>
-    /// Interfaces with the <cref>pointerMaterial</cref> to display the vector field. 
-    /// </summary>
-    void PlotResults()
-    {
-        // Then the data from the computeShader is sent to the shader to be rendered.
-        pointerMaterial.SetBuffer(positionsBufferID, positionsBuffer);
-        pointerMaterial.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
-        pointerMaterial.SetBuffer(vector2BufferID, vector2Buffer);
-        pointerMaterial.SetBuffer(vector3BufferID, vector3Buffer);
-        pointerMaterial.SetBuffer(magnitudesBufferID, magnitudesBuffer);
+    ///// <summary>
+    ///// Interfaces with the <cref>pointerMaterial</cref> to display the vector field. 
+    ///// </summary>
+    //void PlotResults()
+    //{
+    //    // Then the data from the computeShader is sent to the shader to be rendered.
+    //    pointerMaterial.SetBuffer(positionsBufferID, positionsBuffer);
+    //    pointerMaterial.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
+    //    pointerMaterial.SetBuffer(vector2BufferID, vector2Buffer);
+    //    pointerMaterial.SetBuffer(vector3BufferID, vector3Buffer);
+    //    pointerMaterial.SetBuffer(magnitudesBufferID, magnitudesBuffer);
 
-        // Setting the bounds and giving a draw call
-        var bounds = zone.bounds;
-        Graphics.DrawMeshInstancedProcedural(pointerMesh, 0, pointerMaterial, bounds, numOfPoints);
-    }
+    //    // Setting the bounds and giving a draw call
+    //    var bounds = zone.bounds;
+    //    Graphics.DrawMeshInstancedProcedural(pointerMesh, 0, pointerMaterial, bounds, numOfPoints);
+    //}
 }

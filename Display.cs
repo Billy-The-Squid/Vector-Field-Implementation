@@ -4,6 +4,7 @@ using UnityEngine;
 
 public abstract class Display : MonoBehaviour
 {
+    [System.NonSerialized]
     public Bounds bounds;
     /// <summary>
     /// The material used to draw the vector field. Must be capable of handling GPU instancing. 
@@ -23,5 +24,5 @@ public abstract class Display : MonoBehaviour
     /// </summary>
     /// <param name="positionBuffer"></param>
     /// <param name="vectorsBuffer"></param>
-    public abstract void DisplayVectors(ComputeBuffer positionBuffer, ComputeBuffer vectorsBuffer);
+    public abstract void DisplayVectors(ComputeBuffer positionsBuffer, ComputeBuffer vectorsBuffer);
 }

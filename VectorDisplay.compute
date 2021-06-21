@@ -1,5 +1,7 @@
 #pragma kernel CalculateDisplay
 
+int _NumberOfPoints;
+
 // The buffer storing the positions
 RWStructuredBuffer<float3> _Positions;
 
@@ -34,52 +36,54 @@ float Rescale(float vect_mag) {
 
 [numthreads(64, 1, 1)]
 void CalculateDisplay(uint3 id : SV_DispatchThreadID) {
-    int index = id.x;
+    if (id.x < (uint) _NumberOfPoints) {
+        int index = id.x;
 
-    // First, rescale the vectors for an appropriate display size. 
-    _PlotVectors[index] = _Vectors[index] * Rescale(CalculateMagnitudes(index));
+        // First, rescale the vectors for an appropriate display size. 
+        _PlotVectors[index] = _Vectors[index] * Rescale(CalculateMagnitudes(index));
 
-    // Calculate the orthogonal vectors, given a vector.
-	// The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.
-	// Please find a different way to do this. 
-    float3 vect = _PlotVectors[index];
-    float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
-    float3 vect_2;
-    float3 vect_3;
-    if (vect.x == 0.0 && vect.y == 0.0 && vect.z == 0.0)
-    { // Check whether we should just make the mesh disappear. 
-        _Vectors2[index] = float3(0.0, 0.0, 0.0);
-        _Vectors3[index] = float3(0.0, 0.0, 0.0);
-        return;
-    }
+        // Calculate the orthogonal vectors, given a vector.
+	    // The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.
+	    // Please find a different way to do this. 
+        float3 vect = _PlotVectors[index];
+        float vect_mag = sqrt(vect.x * vect.x + vect.y * vect.y + vect.z * vect.z);
+        float3 vect_2;
+        float3 vect_3;
+        if (vect.x == 0.0 && vect.y == 0.0 && vect.z == 0.0)
+        { // Check whether we should just make the mesh disappear. 
+            _Vectors2[index] = float3(0.0, 0.0, 0.0);
+            _Vectors3[index] = float3(0.0, 0.0, 0.0);
+            return;
+        } // Necessary? Dubious.
 	
-	// Depending on how the material works and if the trans. matrix needs to scale, NORMALIZE VECT HERE.
-    if ((vect.x == 0.0) && (vect.y == 0.0))
-    { // Guaranteeing that vect_2 isn't parallel with vect with 
-        vect_2.x = 0.0;
-        vect_2.y = -vect.z;
-        vect_2.z = vect.y;
-    }
-    else
-    {
-        vect_2.x = vect.y;
-        vect_2.y = -vect.x;
-        vect_2.z = 0.0;
-    }
+	    // Depending on how the material works and if the trans. matrix needs to scale, NORMALIZE VECT HERE.
+        if ((vect.x == 0.0) && (vect.y == 0.0))
+        { // Guaranteeing that vect_2 isn't parallel with vect with 
+            vect_2.x = 0.0;
+            vect_2.y = -vect.z;
+            vect_2.z = vect.y;
+        }
+        else
+        {
+            vect_2.x = vect.y;
+            vect_2.y = -vect.x;
+            vect_2.z = 0.0;
+        }
 
-	// Re-magnituding vect_2
-    float vect_2_mag = sqrt(vect_2.x * vect_2.x + vect_2.y * vect_2.y + vect_2.z * vect_2.z);
-    vect_2 *= (vect_mag / vect_2_mag);
+	    // Re-magnituding vect_2
+        float vect_2_mag = sqrt(vect_2.x * vect_2.x + vect_2.y * vect_2.y + vect_2.z * vect_2.z);
+        vect_2 *= (vect_mag / vect_2_mag);
 
-	// Cross product!
-    vect_3.x = vect.y * vect_2.z - vect.z * vect_2.y;
-    vect_3.y = vect.z * vect_2.x - vect.x * vect_2.z;
-    vect_3.z = vect.x * vect_2.y - vect.y * vect_2.x;
+	    // Cross product!
+        vect_3.x = vect.y * vect_2.z - vect.z * vect_2.y;
+        vect_3.y = vect.z * vect_2.x - vect.x * vect_2.z;
+        vect_3.z = vect.x * vect_2.y - vect.y * vect_2.x;
 
-	// Re-magnituding vect_3
-    float vect_3_mag = sqrt(vect_3.x * vect_3.x + vect_3.y * vect_3.y + vect_3.z * vect_3.z);
-    vect_3 *= (vect_mag / vect_3_mag);
+	    // Re-magnituding vect_3
+        float vect_3_mag = sqrt(vect_3.x * vect_3.x + vect_3.y * vect_3.y + vect_3.z * vect_3.z);
+        vect_3 *= (vect_mag / vect_3_mag);
 	
-    _Vectors2[index] = vect_2;
-    _Vectors3[index] = vect_3;
+        _Vectors2[index] = vect_2;
+        _Vectors3[index] = vect_3;
+    }
 }

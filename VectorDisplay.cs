@@ -37,6 +37,7 @@ public class VectorDisplay : Display
     int numOfPoints;
 
     static readonly int
+        numPointsID = Shader.PropertyToID("_NumberOfPoints"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
         vectorsBufferID = Shader.PropertyToID("_Vectors"),
         plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
@@ -48,12 +49,18 @@ public class VectorDisplay : Display
     [SerializeField]
     ComputeShader displayComputer;
 
+    //[System.NonSerialized]
+    //public new float maxVectorLength;
+
+    private bool initialized = false;
 
 
 
 
-    private void OnEnable()
+
+    private void Initialize()
     {
+        if(initialized) { return; }
         unsafe // <-- This could maybe be a source of problems.
         {
             plotVectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
@@ -61,6 +68,8 @@ public class VectorDisplay : Display
             vector3Buffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
             magnitudesBuffer = new ComputeBuffer(numOfPoints, sizeof(float));
         }
+
+        initialized = true;
     }
 
     private void OnDisable()
@@ -76,10 +85,16 @@ public class VectorDisplay : Display
 
         magnitudesBuffer.Release();
         magnitudesBuffer = null;
+
+        initialized = false;
     }
 
     public override void DisplayVectors(ComputeBuffer positionsBuffer, ComputeBuffer vectorsBuffer)
     {
+        numOfPoints = positionsBuffer.count;
+
+        Initialize();
+
         CalculateDisplay(positionsBuffer, vectorsBuffer);
 
         PlotResults(positionsBuffer);
@@ -89,6 +104,8 @@ public class VectorDisplay : Display
     {
         int kernelID = 0;
 
+        displayComputer.SetInt(numPointsID, numOfPoints);
+
         displayComputer.SetBuffer(kernelID, positionsBufferID, positionsBuffer);
         displayComputer.SetBuffer(kernelID, vectorsBufferID, vectorsBuffer);
         displayComputer.SetBuffer(kernelID, plotVectorsBufferID, plotVectorsBuffer);
@@ -97,7 +114,8 @@ public class VectorDisplay : Display
         displayComputer.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
         displayComputer.SetFloat(maxVectorLengthID, maxVectorLength);
 
-        int numGroups = Mathf.CeilToInt(numOfPoints / 64);
+        //Debug.Log("Number of points: " + numOfPoints);
+        int numGroups = Mathf.CeilToInt(numOfPoints / 64f);
         displayComputer.Dispatch(kernelID, numGroups, 1, 1);
     }
 
@@ -115,5 +133,14 @@ public class VectorDisplay : Display
 
         // Setting the bounds and giving a draw call
         Graphics.DrawMeshInstancedProcedural(pointerMesh, 0, pointerMaterial, bounds, numOfPoints);
+
+        //// Debugging code
+        //Debug.Log("Max vector length: " + maxVectorLength);
+        //Vector3[] debugArray = new Vector3[numOfPoints];
+        ////float[] debugArray = new float[numOfPoints];
+        //plotVectorsBuffer.GetData(debugArray);
+        ////Debug.Log("Number of points in plot array:" + magnitudesBuffer.count);
+        //Debug.Log((("First three points in plot array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
+        //Debug.Log((("Last three points in plot array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 }
