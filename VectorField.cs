@@ -29,32 +29,6 @@ public class VectorField : MonoBehaviour
     /// Same indexing scheme as <cref>positionsBuffer</cref>.
     /// </summary>
     public ComputeBuffer vectorsBuffer { get; protected set; }
-    ///// <summary>
-    ///// The buffer in which the visual magnitudes of each vector are stored. 
-    ///// Same indexing scheme as <cref>positionsBuffer</cref>.
-    ///// </summary>
-    //public ComputeBuffer plotVectorsBuffer { get; protected set; }
-    ///// <summary>
-    ///// One of two buffers in which values used for calculating the transformation matrix for vectors are stored.
-    ///// Same indexing scheme as <cref>positionsBuffer</cref>.
-    ///// 
-    ///// Contains vectors orthogonal to those in <cref>plotVectorsBuffer</cref>, with the same magnitude, in order 
-    ///// to generate an orthogonal basis. 
-    ///// </summary>
-    //public ComputeBuffer vector2Buffer { get; protected set; }
-    ///// <summary>
-    ///// One of two buffers in which values used for calculating the transformation matrix for vectors are stored.
-    ///// Same indexing scheme as <cref>positionsBuffer</cref>.
-    ///// 
-    ///// Contains vectors orthogonal to those in <cref>plotVectorsBuffer</cref>, with the same magnitude, in order 
-    ///// to generate an orthogonal basis. 
-    ///// </summary>
-    //public ComputeBuffer vector3Buffer { get; protected set; }
-    ///// <summary>
-    ///// Stores the magnitudes of the vectors in <cref>vectorsBuffer</cref>. 
-    ///// Same indexing scheme as <cref>positionsBuffer</cref>.
-    ///// </summary>
-    //public ComputeBuffer magnitudesBuffer { get; protected set; }
     /// <summary>
     /// Stores the extra vector arguments used in the computation.
     /// Set your own indexing scheme. 
@@ -87,26 +61,13 @@ public class VectorField : MonoBehaviour
         //vector3BufferID = Shader.PropertyToID("_Vectors3"),
         floatArgsID = Shader.PropertyToID("_FloatArgs"),
         vectorArgsID = Shader.PropertyToID("_VectorArgs");
-        //magnitudesBufferID = Shader.PropertyToID("_Magnitudes"),
-        //maxVectorLengthID = Shader.PropertyToID("_MaxVectorLength"),
-        //fieldIndexID = Shader.PropertyToID("_FieldIndex");
 
-    ///// <summary>
-    ///// The material used to draw the vector field. Must be capable of handling GPU instancing. 
-    ///// </summary>
-    //[SerializeField]
-    //public Material pointerMaterial;
-    ///// <summary>
-    ///// The mesh to draw the pointers from.
-    ///// </summary>
-    //[SerializeField]
-    //Mesh pointerMesh;
 
     /// <summary>
     /// The possible types of field to display. 
     /// It is the user's responsibility to make sure that these selections align with those in FieldLibrary.hlsl
     /// </summary>
-    public enum FieldType { Outwards, Swirl }
+    public enum FieldType { Outwards, Swirl, Coulomb }
     /// <summary>
     /// The type of field to be displayed. Cannot be changed in Play Mode if <cref>isDynamic</cref> is set to False.
     /// </summary>

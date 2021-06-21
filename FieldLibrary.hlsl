@@ -46,7 +46,7 @@ class Coulomb : FieldInterface
         float3 vect = float3(0.0, 0.0, 0.0);
         // The first argument in _FloatArgs is the number of charges in the system
         float numCharges = _FloatArgs[0];
-        for (int i = 1; i < numCharges + 1; i++) {
+        for (int i = 1; i < numCharges + 2; i++) {
             // The zeroth index of _VectorArgs is unused so that the two buffers align.
             float3 displacement = position - _VectorArgs[i];
             float distance = sqrt(displacement.x * displacement.x + 
