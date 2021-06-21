@@ -12,6 +12,7 @@ public abstract class FieldZone : MonoBehaviour
     /// <summary>
     ///  The maximum displayed length of any vector in the field.
     /// </summary>
+    [System.NonSerialized]
     public float maxVectorLength = 1;
     /// <summary>
     /// The worldspace point that the field calculations will treat as (0,0,0).
