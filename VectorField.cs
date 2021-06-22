@@ -88,13 +88,26 @@ public class VectorField : MonoBehaviour
     [SerializeField]
     public Display display { get; protected set; }
 
-    // DOCUMENT THESE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    public delegate void Reminder();
 
+    public delegate void Reminder();
+    /// <summary>
+    /// This delegate will get called prior to setting the positions buffer.
+    /// </summary>
     public Reminder preSetPositions;
+    /// <summary>
+    /// This delegate will get called prior to setting the vectors buffer. 
+    /// </summary>
     public Reminder preCalculations;
+    /// <summary>
+    /// This delegate will get called prior to displaying the field. 
+    /// </summary>
     public Reminder preDisplay;
 
+    /// <summary>
+    /// Extra float arguments for the functions in FieldLibrary.hlsl. These should be set
+    /// by the user according to how the field function should read them. These should be 
+    /// set by subscribing to the `preCalculations` delegate.
+    /// </summary>
     public float[] floatArgsArray { get; set; }
     public Vector3[] vectorArgsArray { get; set; }
 
@@ -201,21 +214,21 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
-        if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
-        {
-            //Debug.Log("Making new buffer...");
-            floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
-            //floatArgsArray[0] = -1.5f;
-            floatArgsBuffer.SetData(floatArgsArray);
-        }
-        if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
-        {
-            unsafe
-            {
-                vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
-            }
-            vectorArgsBuffer.SetData(vectorArgsArray);
-        }
+        //if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
+        //{
+        //    //Debug.Log("Making new buffer...");
+        //    floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
+        //    //floatArgsArray[0] = -1.5f;
+        //    floatArgsBuffer.SetData(floatArgsArray);
+        //}
+        //if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
+        //{
+        //    unsafe
+        //    {
+        //        vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
+        //    }
+        //    vectorArgsBuffer.SetData(vectorArgsArray);
+        //}
 
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
