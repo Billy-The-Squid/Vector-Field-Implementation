@@ -31,12 +31,14 @@ public class VectorField : MonoBehaviour
     public ComputeBuffer vectorsBuffer { get; protected set; }
     /// <summary>
     /// Stores the extra float arguments used in the computation.
-    /// Set your own indexing scheme. 
+    /// Set your own indexing scheme and initialize by subscribing
+    /// to the `preCalculations` delegate.
     /// </summary>
     public ComputeBuffer floatArgsBuffer { get; set; }
     /// <summary>
     /// Stores the extra vector arguments used in the computation.
-    /// Set your own indexing scheme. 
+    /// Set your own indexing scheme and initialize by subscribing
+    /// to the `preCalculations` delegate.
     /// </summary>
     public ComputeBuffer vectorArgsBuffer { get; set; }
     
@@ -103,26 +105,15 @@ public class VectorField : MonoBehaviour
     /// </summary>
     public Reminder preDisplay;
 
-    /// <summary>
-    /// Extra float arguments for the functions in FieldLibrary.hlsl. These should be set
-    /// by the user according to how the field function should read them. These should be 
-    /// set by subscribing to the `preCalculations` delegate.
-    /// </summary>
-    public float[] floatArgsArray { get; set; }
-    public Vector3[] vectorArgsArray { get; set; }
 
 
 
 
-
-    private void Awake()
-    {
-        if (zone == null)
-        {
+    private void Awake() {
+        if (zone == null) {
             zone = GetComponent<FieldZone>();
         }
-        if (display == null)
-        {
+        if (display == null) {
             display = GetComponent<Display>();
         }
     }
@@ -160,19 +151,6 @@ public class VectorField : MonoBehaviour
     {
         vectorsBuffer.Release();
         vectorsBuffer = null;
-
-        if (floatArgsBuffer != null)
-        {
-            floatArgsBuffer.Release();
-            floatArgsBuffer = null;
-            floatArgsArray = null;
-        }
-        if (vectorArgsBuffer != null)
-        {
-            vectorArgsBuffer.Release();
-            vectorArgsBuffer = null;
-            vectorArgsArray = null;
-        }
     }
 
 
@@ -195,10 +173,10 @@ public class VectorField : MonoBehaviour
         }
 
         // Debug code
-        Vector3[] debugArray = new Vector3[numOfPoints];
-        vectorsBuffer.GetData(debugArray);
-        Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
-        Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
+        //Vector3[] debugArray = new Vector3[numOfPoints];
+        //vectorsBuffer.GetData(debugArray);
+        //Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
+        //Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 
     private void LateUpdate()
@@ -214,22 +192,6 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
-        //if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
-        //{
-        //    //Debug.Log("Making new buffer...");
-        //    floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
-        //    //floatArgsArray[0] = -1.5f;
-        //    floatArgsBuffer.SetData(floatArgsArray);
-        //}
-        //if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
-        //{
-        //    unsafe
-        //    {
-        //        vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
-        //    }
-        //    vectorArgsBuffer.SetData(vectorArgsArray);
-        //}
-
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
 
@@ -242,8 +204,6 @@ public class VectorField : MonoBehaviour
         if(vectorArgsBuffer != null) {
             computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
         }
-
-        
 
         // This does the math and stores information in the positionsBuffer.
         int groups = Mathf.CeilToInt(numOfPoints / 64f);
