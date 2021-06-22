@@ -36,10 +36,10 @@ float3 Coulomb(float3 position)
     // The first argument in _FloatArgs is the number of charges in the system
     float numCharges = _FloatArgs[0]; 
     float i;
-    for (i = 1.0; i < 3.0; i++) // numCharges + 0.0; i++)
+    for (i = 1.0; i < numCharges + 1; i++) // numCharges + 0.0; i++)
     {
         // The zeroth index of _VectorArgs is unused so that the two buffers align.
-        float3 displacement = position - _VectorArgs[i];
+        float3 displacement = position - _VectorArgs[i] + _CenterPosition;
         float distance = sqrt(displacement.x * displacement.x +
                 displacement.y * displacement.y +
                 displacement.z * displacement.z);
