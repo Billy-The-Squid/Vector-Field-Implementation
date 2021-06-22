@@ -13,12 +13,15 @@ RWStructuredBuffer<float3> _Vectors;
 // The (0,0,0) point of the field
 float3 _CenterPosition;
 
-// This buffer allows you to send additional vector arguments to whatever your field function is. 
+// These buffers allow you to send additional arguments to whatever your field function is. 
 StructuredBuffer<float> _FloatArgs;
 StructuredBuffer<float3> _VectorArgs;
 // It's up to you to parse these inside the function, so you can split them into two separate arrays
 // if you choose. Just remember that not every model supports GetDimensions, so you need to figure
 // out for yourself how to stop from going out of bounds. 
+
+// You can try to make those RWStructuredBuffers, but that crashed my computer so I'm not going to
+// do that. 
 
 
 
