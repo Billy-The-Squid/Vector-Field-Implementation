@@ -35,17 +35,19 @@ float3 Coulomb(float3 position)
     float3 vect = float3(0.0, 0.0, 0.0);
     // The first argument in _FloatArgs is the number of charges in the system
     float numCharges = _FloatArgs[0]; 
-    //for (int i = 1; i < numCharges + 0; i++)
-    //{
-    //    // The zeroth index of _VectorArgs is unused so that the two buffers align.
-    //    float3 displacement = position - _VectorArgs[i];
-    //    float distance = sqrt(displacement.x * displacement.x +
-    //            displacement.y * displacement.y +
-    //            displacement.z * displacement.z);
-    //    vect += _FloatArgs[i] / (pow(distance, 3) + 0.0000000001) * displacement;
-    //}
-    vect.x += numCharges;
+    float i;
+    for (i = 1.0; i < 3.0; i++) // numCharges + 0.0; i++)
+    {
+        // The zeroth index of _VectorArgs is unused so that the two buffers align.
+        float3 displacement = position - _VectorArgs[i];
+        float distance = sqrt(displacement.x * displacement.x +
+                displacement.y * displacement.y +
+                displacement.z * displacement.z);
+        vect += _FloatArgs[i] / (pow(distance, 3) + 0.0000000001) * displacement;
+    }
+    //vect.x += numCharges;
     return vect;
+    //return float3(0.0, numCharges, 0.0);
 };
 
 // Every type that's added must also be present in the enum in VectorFields.cs and have a kernel in VectorCompute.compute

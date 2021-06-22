@@ -182,10 +182,10 @@ public class VectorField : MonoBehaviour
         }
 
         // Debug code
-        //Vector3[] debugArray = new Vector3[numOfPoints];
-        //vectorsBuffer.GetData(debugArray);
-        //Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
-        //Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
+        Vector3[] debugArray = new Vector3[numOfPoints];
+        vectorsBuffer.GetData(debugArray);
+        Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
+        Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 
     private void LateUpdate()
@@ -201,21 +201,21 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
-        //if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
-        //{
-        //    //Debug.Log("Making new buffer...");
-        //    floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
-        //    //floatArgsArray[0] = -1.5f;
-        //    floatArgsBuffer.SetData(floatArgsArray);
-        //}
-        //if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
-        //{
-        //    unsafe
-        //    {
-        //        vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
-        //    }
-        //    vectorArgsBuffer.SetData(vectorArgsArray);
-        //}
+        if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
+        {
+            //Debug.Log("Making new buffer...");
+            floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
+            //floatArgsArray[0] = -1.5f;
+            floatArgsBuffer.SetData(floatArgsArray);
+        }
+        if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
+        {
+            unsafe
+            {
+                vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
+            }
+            vectorArgsBuffer.SetData(vectorArgsArray);
+        }
 
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
