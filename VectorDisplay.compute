@@ -40,7 +40,7 @@ void CalculateDisplay(uint3 id : SV_DispatchThreadID) {
         int index = id.x;
 
         // First, rescale the vectors for an appropriate display size. 
-        _PlotVectors[index] = _Vectors[index] * CalculateMagnitudes(index); //* Rescale(CalculateMagnitudes(index));
+        _PlotVectors[index] = _Vectors[index] * Rescale(CalculateMagnitudes(index));
 
         // Calculate the orthogonal vectors, given a vector.
 	    // The other two unit vectors should be orthogonal to the first and have the same magnitude scaling.

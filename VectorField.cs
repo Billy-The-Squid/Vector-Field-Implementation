@@ -57,9 +57,6 @@ public class VectorField : MonoBehaviour
         centerID = Shader.PropertyToID("_CenterPosition"),
         positionsBufferID = Shader.PropertyToID("_Positions"),
         vectorBufferID = Shader.PropertyToID("_Vectors"),
-        //plotVectorsBufferID = Shader.PropertyToID("_PlotVectors"),
-        //vector2BufferID = Shader.PropertyToID("_Vectors2"),
-        //vector3BufferID = Shader.PropertyToID("_Vectors3"),
         floatArgsID = Shader.PropertyToID("_FloatArgs"),
         vectorArgsID = Shader.PropertyToID("_VectorArgs");
 
@@ -98,8 +95,8 @@ public class VectorField : MonoBehaviour
     public Reminder preCalculations;
     public Reminder preDisplay;
 
-    public float[] floatArgsArray { get; set; }
-    public Vector3[] vectorArgsArray { get; set; }
+    //public float[] floatArgsArray { get; set; }
+    //public Vector3[] vectorArgsArray { get; set; }
 
 
 
@@ -150,19 +147,6 @@ public class VectorField : MonoBehaviour
     {
         vectorsBuffer.Release();
         vectorsBuffer = null;
-
-        if(floatArgsBuffer != null)
-        {
-            floatArgsBuffer.Release();
-            floatArgsBuffer = null;
-            floatArgsArray = null;
-        }
-        if(vectorArgsBuffer != null)
-        {
-            vectorArgsBuffer.Release();
-            vectorArgsBuffer = null;
-            vectorArgsArray = null;
-        }
     }
 
 
@@ -181,23 +165,20 @@ public class VectorField : MonoBehaviour
         {
             preCalculations();
 
-            
-            // Debug code
-            //Debug.Log("Extra args are null? " + (floatArgsBuffer == null));
             CalculateVectors();
         }
 
         // Debug code
-        Vector3[] debugArray = new Vector3[numOfPoints];
-        vectorsBuffer.GetData(debugArray);
-        Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
-        Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
+        //Vector3[] debugArray = new Vector3[numOfPoints];
+        //vectorsBuffer.GetData(debugArray);
+        //Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
+        //Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 
     private void LateUpdate()
     {
         preDisplay();
-        //PlotResults();
+
         display.DisplayVectors(positionsBuffer, vectorsBuffer);
     }
 
@@ -207,22 +188,6 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
-        if(floatArgsBuffer == null && floatArgsArray.Length != 0)
-        {
-            //Debug.Log("Making new buffer...");
-            floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
-            //floatArgsArray[0] = -1.5f;
-            floatArgsBuffer.SetData(floatArgsArray);
-        }
-        if(vectorArgsBuffer == null && vectorArgsArray.Length != 0)
-        {
-            unsafe
-            {
-                vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
-            }
-            vectorArgsBuffer.SetData(vectorArgsArray);
-        }
-
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
 
@@ -231,10 +196,6 @@ public class VectorField : MonoBehaviour
         computeShader.SetBuffer(kernelID, vectorBufferID, vectorsBuffer);
         if(floatArgsBuffer != null) {
             computeShader.SetBuffer(kernelID, floatArgsID, floatArgsBuffer);
-            //Debug.Log("Sending float args");
-            // Debug code
-            //float[] debugArray = new float[floatArgsBuffer.count];
-            //floatArgsBuffer.GetData(debugArray); 
         }
         if(vectorArgsBuffer != null) {
             computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
