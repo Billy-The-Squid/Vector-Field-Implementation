@@ -95,8 +95,8 @@ public class VectorField : MonoBehaviour
     public Reminder preCalculations;
     public Reminder preDisplay;
 
-    //public float[] floatArgsArray { get; set; }
-    //public Vector3[] vectorArgsArray { get; set; }
+    public float[] floatArgsArray { get; set; }
+    public Vector3[] vectorArgsArray { get; set; }
 
 
 
@@ -147,6 +147,19 @@ public class VectorField : MonoBehaviour
     {
         vectorsBuffer.Release();
         vectorsBuffer = null;
+
+        if (floatArgsBuffer != null)
+        {
+            floatArgsBuffer.Release();
+            floatArgsBuffer = null;
+            floatArgsArray = null;
+        }
+        if (vectorArgsBuffer != null)
+        {
+            vectorArgsBuffer.Release();
+            vectorArgsBuffer = null;
+            vectorArgsArray = null;
+        }
     }
 
 
@@ -188,6 +201,22 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
+        //if (floatArgsBuffer == null && floatArgsArray != null && floatArgsArray.Length != 0)
+        //{
+        //    //Debug.Log("Making new buffer...");
+        //    floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
+        //    //floatArgsArray[0] = -1.5f;
+        //    floatArgsBuffer.SetData(floatArgsArray);
+        //}
+        //if (vectorArgsBuffer == null && vectorArgsArray != null && vectorArgsArray.Length != 0)
+        //{
+        //    unsafe
+        //    {
+        //        vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
+        //    }
+        //    vectorArgsBuffer.SetData(vectorArgsArray);
+        //}
+
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
 

@@ -34,7 +34,7 @@ float3 Coulomb(float3 position)
 {
     float3 vect = float3(0.0, 0.0, 0.0);
     // The first argument in _FloatArgs is the number of charges in the system
-    float numCharges = 3; //_FloatArgs[0];
+    float numCharges = _FloatArgs[0]; 
     //for (int i = 1; i < numCharges + 0; i++)
     //{
     //    // The zeroth index of _VectorArgs is unused so that the two buffers align.
