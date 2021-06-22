@@ -75,17 +75,18 @@ public class VectorField : MonoBehaviour
     public FieldType fieldType;
 
     /// <summary>
-    /// Set this to true if the field should update when the transform is moved in Play Mode. 
-    /// Requires more GPU time. Sets <cref>isDynamic</cref> to true as well. 
-    /// </summary>
-    [SerializeField]
-    bool canMove;
-    /// <summary>
     /// Set this to true if the field values should be updated each frame. 
     /// Requires more GPU time. 
+    /// 
+    /// Tip: this can be toggled on during play mode to force the field to recalculate, then 
+    /// toggled back off. 
     /// </summary>
     [SerializeField]
     bool isDynamic;
+    /// <summary>
+    /// Indicates whether the vectors buffer has been initialized. For non-dynamic fields. 
+    /// </summary>
+    private bool hasBeenCalculated;
 
     [SerializeField]
     public Display display { get; protected set; }
@@ -137,12 +138,7 @@ public class VectorField : MonoBehaviour
             vectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3)); // last arg: size of single object
         }
 
-        preCalculations();
-
-        CalculateVectors();
-
-        display.maxVectorLength = zone.maxVectorLength;
-        display.bounds = zone.bounds;
+        
     }
 
 
@@ -158,18 +154,22 @@ public class VectorField : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(canMove) {
-            preSetPositions();
-            zone.SetPositions();
+        preSetPositions();
+        zone.SetPositions();
+
+        if (zone.canMove) {
             isDynamic = true;
         }
 
         
-        if(isDynamic)
+        if(isDynamic || !hasBeenCalculated)
         {
             preCalculations();
-
             CalculateVectors();
+            hasBeenCalculated = true;
+
+            display.maxVectorLength = zone.maxVectorLength;
+            display.bounds = zone.bounds;
         }
 
         // Debug code
@@ -179,7 +179,7 @@ public class VectorField : MonoBehaviour
         //Debug.Log((("Last three points in vector array: " + debugArray[numOfPoints - 1]) + debugArray[numOfPoints - 2]) + debugArray[numOfPoints - 3]);
     }
 
-    private void LateUpdate()
+    private void LateUpdate() // WHAT REQUIRES THIS? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     {
         preDisplay();
 
@@ -213,5 +213,14 @@ public class VectorField : MonoBehaviour
     public void Pass()
     {
         ;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if(display != null && display.bounds != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(display.bounds.center, display.bounds.size);
+        }
     }
 }

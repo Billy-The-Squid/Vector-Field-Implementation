@@ -33,6 +33,8 @@ public abstract class FieldZone : MonoBehaviour
     [SerializeField]
     public Collider triggerCollider;
 
+    public bool canMove;
+
     /// <summary>
     /// Initializes the variables that will not change throughout a game session,
     /// but which must be created before <cref>SetPositions</cref> may be called. 
