@@ -172,7 +172,7 @@ public class VectorField : MonoBehaviour
             display.bounds = zone.bounds;
         }
 
-        // Debug code
+        //// Debug code
         //Vector3[] debugArray = new Vector3[numOfPoints];
         //vectorsBuffer.GetData(debugArray);
         //Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);

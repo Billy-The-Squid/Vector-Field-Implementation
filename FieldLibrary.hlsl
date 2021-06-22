@@ -1,3 +1,5 @@
+#ifndef FIELD_LIBRARY
+
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // To add a new field to the Field Library, follow these steps:
 //   1) Create a new function in the field library file. DO NOT change the parameters 
@@ -52,3 +54,5 @@ float3 Coulomb(float3 position)
 
 // Every type that's added must also be present in the enum in VectorFields.cs and have a kernel in VectorCompute.compute
 
+#define FIELD_LIBRARY
+#endif
