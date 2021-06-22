@@ -14,8 +14,8 @@ RWStructuredBuffer<float3> _Vectors;
 float3 _CenterPosition;
 
 // This buffer allows you to send additional vector arguments to whatever your field function is. 
-RWStructuredBuffer<float3> _VectorArgs;
 RWStructuredBuffer<float> _FloatArgs;
+RWStructuredBuffer<float3> _VectorArgs;
 // It's up to you to parse these inside the function, so you can split them into two separate arrays
 // if you choose. Just remember that not every model supports GetDimensions, so you need to figure
 // out for yourself how to stop from going out of bounds. 
@@ -44,16 +44,16 @@ RWStructuredBuffer<float> _FloatArgs;
 
 
 
-void FieldStrength(float index, FieldInterface field)
-{
-    float3 result = 0;
-    float3 position = _Positions[index];
-	result = field.Field(position - _CenterPosition);
-    _Vectors[index] = result;
-    //float res_mag = CalculateMagnitudes(index);
-    //result *= Rescale(res_mag);
-    //_PlotVectors[index] = result;
-};
+//void FieldStrength(float index, FieldInterface field)
+//{
+//    float3 result = 0;
+//    float3 position = _Positions[index];
+//	result = field.Field(position - _CenterPosition);
+//    _Vectors[index] = result;
+//    //float res_mag = CalculateMagnitudes(index);
+//    //result *= Rescale(res_mag);
+//    //_PlotVectors[index] = result;
+//};
 
 
 
@@ -107,12 +107,11 @@ void FieldStrength(float index, FieldInterface field)
 #define KERNEL_NAME(fieldName) \
     [numthreads(64, 1, 1)] \
     void fieldName##Field(uint3 id : SV_DispatchThreadID) { \
-        fieldName field; \
         uint bufferSize; \
         uint stride; \
         _Positions.GetDimensions(bufferSize, stride); \
         if (id.x < bufferSize) { \
-            FieldStrength(id.x, field); \
+            _Vectors[id.x] = fieldName(_Positions[id.x] - _CenterPosition); \
         } \
     }
 

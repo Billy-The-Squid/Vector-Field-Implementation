@@ -71,17 +71,22 @@ public class VectorDisplay : Display
 
     private void OnDestroy()
     {
-        plotVectorsBuffer.Release();
-        plotVectorsBuffer = null;
-
-        vector2Buffer.Release();
-        vector2Buffer = null;
-
-        vector3Buffer.Release();
-        vector3Buffer = null;
-
-        magnitudesBuffer.Release();
-        magnitudesBuffer = null;
+        if(plotVectorsBuffer != null) {
+            plotVectorsBuffer.Release();
+            plotVectorsBuffer = null;
+        }
+        if(vector2Buffer != null) {
+            vector2Buffer.Release();
+            vector2Buffer = null;
+        }
+        if(vector3Buffer != null) {
+            vector3Buffer.Release();
+            vector3Buffer = null;
+        }
+        if(magnitudesBuffer != null) {
+            magnitudesBuffer.Release();
+            magnitudesBuffer = null;
+        }
 
         initialized = false;
     }

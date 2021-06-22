@@ -30,15 +30,16 @@ public class VectorField : MonoBehaviour
     /// </summary>
     public ComputeBuffer vectorsBuffer { get; protected set; }
     /// <summary>
-    /// Stores the extra vector arguments used in the computation.
-    /// Set your own indexing scheme. 
-    /// </summary>
-    public ComputeBuffer vectorArgsBuffer { get; set; }
-    /// <summary>
     /// Stores the extra float arguments used in the computation.
     /// Set your own indexing scheme. 
     /// </summary>
     public ComputeBuffer floatArgsBuffer { get; set; }
+    /// <summary>
+    /// Stores the extra vector arguments used in the computation.
+    /// Set your own indexing scheme. 
+    /// </summary>
+    public ComputeBuffer vectorArgsBuffer { get; set; }
+    
 
     /// <summary>
     /// The number of points at which vectors will be plotted and the number of values in each buffer.
@@ -49,7 +50,7 @@ public class VectorField : MonoBehaviour
     /// The compute shader used to generate the vector field. 
     /// </summary>
     [SerializeField]
-    ComputeShader computeShader;
+    public ComputeShader computeShader;
 
     // Property IDs used to send values to various shaders.
     static readonly int
@@ -90,6 +91,16 @@ public class VectorField : MonoBehaviour
     [SerializeField]
     public Display display { get; protected set; }
 
+    // DOCUMENT THESE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    public delegate void Reminder();
+
+    public Reminder preSetPositions;
+    public Reminder preCalculations;
+    public Reminder preDisplay;
+
+    public float[] floatArgsArray { get; set; }
+    public Vector3[] vectorArgsArray { get; set; }
+
 
 
 
@@ -108,6 +119,13 @@ public class VectorField : MonoBehaviour
 
     private void OnEnable()
     {
+        preSetPositions += Pass;
+        preCalculations += Pass;
+        preDisplay += Pass;
+
+
+        preSetPositions();
+
         zone.SetPositions();
 
         positionsBuffer = zone.positionBuffer;
@@ -116,11 +134,9 @@ public class VectorField : MonoBehaviour
         unsafe // <-- This could maybe be a source of problems.
         {
             vectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3)); // last arg: size of single object
-            //plotVectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
-            //vector2Buffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
-            //vector3Buffer = new ComputeBuffer(numOfPoints, sizeof(Vector3));
-            //magnitudesBuffer = new ComputeBuffer(numOfPoints, sizeof(float));
         }
+
+        preCalculations();
 
         CalculateVectors();
 
@@ -135,17 +151,18 @@ public class VectorField : MonoBehaviour
         vectorsBuffer.Release();
         vectorsBuffer = null;
 
-        //plotVectorsBuffer.Release();
-        //plotVectorsBuffer = null;
-
-        //vector2Buffer.Release();
-        //vector2Buffer = null;
-
-        //vector3Buffer.Release();
-        //vector3Buffer = null;
-
-        //magnitudesBuffer.Release();
-        //magnitudesBuffer = null;
+        if(floatArgsBuffer != null)
+        {
+            floatArgsBuffer.Release();
+            floatArgsBuffer = null;
+            floatArgsArray = null;
+        }
+        if(vectorArgsBuffer != null)
+        {
+            vectorArgsBuffer.Release();
+            vectorArgsBuffer = null;
+            vectorArgsArray = null;
+        }
     }
 
 
@@ -154,16 +171,23 @@ public class VectorField : MonoBehaviour
     void Update()
     {
         if(canMove) {
+            preSetPositions();
             zone.SetPositions();
             isDynamic = true;
         }
 
+        
         if(isDynamic)
         {
+            preCalculations();
+
+            
+            // Debug code
+            //Debug.Log("Extra args are null? " + (floatArgsBuffer == null));
             CalculateVectors();
         }
 
-        //// Debug code
+        // Debug code
         Vector3[] debugArray = new Vector3[numOfPoints];
         vectorsBuffer.GetData(debugArray);
         Debug.Log((("First three points in vector array: " + debugArray[0]) + debugArray[1]) + debugArray[2]);
@@ -172,6 +196,7 @@ public class VectorField : MonoBehaviour
 
     private void LateUpdate()
     {
+        preDisplay();
         //PlotResults();
         display.DisplayVectors(positionsBuffer, vectorsBuffer);
     }
@@ -182,45 +207,48 @@ public class VectorField : MonoBehaviour
     /// </summary>
     private void CalculateVectors()
     {
+        if(floatArgsBuffer == null && floatArgsArray.Length != 0)
+        {
+            //Debug.Log("Making new buffer...");
+            floatArgsBuffer = new ComputeBuffer(floatArgsArray.Length, sizeof(float));
+            //floatArgsArray[0] = -1.5f;
+            floatArgsBuffer.SetData(floatArgsArray);
+        }
+        if(vectorArgsBuffer == null && vectorArgsArray.Length != 0)
+        {
+            unsafe
+            {
+                vectorArgsBuffer = new ComputeBuffer(vectorArgsArray.Length, sizeof(Vector3));
+            }
+            vectorArgsBuffer.SetData(vectorArgsArray);
+        }
+
         // The data is sent to the computeShader for calculation
         computeShader.SetVector(centerID, zone.fieldOrigin);
-        //computeShader.SetFloat(maxVectorLengthID, zone.maxVectorLength);
-        //computeShader.SetInt(fieldIndexID, (int)fieldType);
 
         int kernelID = (int)fieldType;
         computeShader.SetBuffer(kernelID, positionsBufferID, positionsBuffer);
         computeShader.SetBuffer(kernelID, vectorBufferID, vectorsBuffer);
-        //computeShader.SetBuffer(kernelID, plotVectorsBufferID, plotVectorsBuffer);
-        //computeShader.SetBuffer(kernelID, vector2BufferID, vector2Buffer);
-        //computeShader.SetBuffer(kernelID, vector3BufferID, vector3Buffer);
-        //computeShader.SetBuffer(kernelID, magnitudesBufferID, magnitudesBuffer);
         if(floatArgsBuffer != null) {
             computeShader.SetBuffer(kernelID, floatArgsID, floatArgsBuffer);
+            //Debug.Log("Sending float args");
+            // Debug code
+            //float[] debugArray = new float[floatArgsBuffer.count];
+            //floatArgsBuffer.GetData(debugArray); 
         }
         if(vectorArgsBuffer != null) {
             computeShader.SetBuffer(kernelID, vectorArgsID, vectorArgsBuffer);
         }
+
         
+
         // This does the math and stores information in the positionsBuffer.
         int groups = Mathf.CeilToInt(numOfPoints / 64f);
         computeShader.Dispatch(kernelID, groups, 1, 1);
     }
 
-
-    ///// <summary>
-    ///// Interfaces with the <cref>pointerMaterial</cref> to display the vector field. 
-    ///// </summary>
-    //void PlotResults()
-    //{
-    //    // Then the data from the computeShader is sent to the shader to be rendered.
-    //    pointerMaterial.SetBuffer(positionsBufferID, positionsBuffer);
-    //    pointerMaterial.SetBuffer(plotVectorsBufferID, plotVectorsBuffer);
-    //    pointerMaterial.SetBuffer(vector2BufferID, vector2Buffer);
-    //    pointerMaterial.SetBuffer(vector3BufferID, vector3Buffer);
-    //    pointerMaterial.SetBuffer(magnitudesBufferID, magnitudesBuffer);
-
-    //    // Setting the bounds and giving a draw call
-    //    var bounds = zone.bounds;
-    //    Graphics.DrawMeshInstancedProcedural(pointerMesh, 0, pointerMaterial, bounds, numOfPoints);
-    //}
+    public void Pass()
+    {
+        ;
+    }
 }

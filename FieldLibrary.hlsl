@@ -1,7 +1,7 @@
-interface FieldInterface
-{
-    float3 Field(float3 position);
-};
+//interface FieldInterface
+//{
+//    float3 Field(float3 position);
+//};
 
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // To add a new field to the Field Library, follow these steps:
@@ -19,43 +19,41 @@ interface FieldInterface
 //      order of the lines at the top of VectorCompute.compute. 
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-class Outwards : FieldInterface
+float3 Outwards(float3 position)
 {
-    float3 Field(float3 position)
-    {
-        return position;
-    }
+    return position;
 };
 
-class Swirl : FieldInterface
+
+
+float3 Swirl(float3 position)
 {
-    float3 Field(float3 position)
-    {
-        float3 val;
-        val.x = -position.z;
-        val.y = 0;
-        val.z = position.x;
-        return val;
-    }
+    float3 val;
+    val.x = -position.z;
+    val.y = 0;
+    val.z = position.x;
+    return val;
 };
 
-class Coulomb : FieldInterface
+
+
+float3 Coulomb(float3 position)
 {
-    float3 Field(float3 position)
+    float3 vect = float3(0.0, 0.0, 0.0);
+    // The first argument in _FloatArgs is the number of charges in the system
+    float numCharges = _FloatArgs[0];
+    for (int i = 1; i < numCharges + 0; i++)
     {
-        float3 vect = float3(0.0, 0.0, 0.0);
-        // The first argument in _FloatArgs is the number of charges in the system
-        float numCharges = _FloatArgs[0];
-        for (int i = 1; i < numCharges + 2; i++) {
-            // The zeroth index of _VectorArgs is unused so that the two buffers align.
-            float3 displacement = position - _VectorArgs[i];
-            float distance = sqrt(displacement.x * displacement.x + 
-                displacement.y * displacement.y + 
-                displacement.z * displacement.z); 
-            vect += _FloatArgs[i] / (pow(distance, 3) + 0.0000000001) * displacement;
-        }
-        return vect;
+        // The zeroth index of _VectorArgs is unused so that the two buffers align.
+        float3 displacement = position - _VectorArgs[i];
+        float distance = sqrt(displacement.x * displacement.x +
+                displacement.y * displacement.y +
+                displacement.z * displacement.z);
+        vect += _FloatArgs[i] / (pow(distance, 3) + 0.0000000001) * displacement;
     }
+    //Debugging:
+    //vect.x += numCharges;
+    return vect;
 };
 
 // Every type that's added must also be present in the enum in VectorFields.cs and have a kernel in VectorCompute.compute
