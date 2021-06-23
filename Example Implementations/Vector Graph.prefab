@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5176312987316993631}
   - component: {fileID: 5176312987316993568}
   - component: {fileID: 5176312987316993569}
-  - component: {fileID: 5176312987316993570}
+  - component: {fileID: 5715201624916766781}
   m_Layer: 0
   m_Name: Vector Graph
   m_TagString: Untagged
@@ -79,11 +79,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff66243662283da4dbfc4c4c64a6fb0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pointerMaterial: {fileID: 2100000, guid: 6566aa4d97a4816429ad22135ce337d3, type: 2}
-  pointerMesh: {fileID: 4300000, guid: c7b00dc10b1d3f243bf824dc63de5830, type: 2}
+  pointerMaterial: {fileID: 2100000, guid: f98b3b830cb38c3428c2c68f56c171e1, type: 2}
+  pointerMesh: {fileID: 4300000, guid: 380613a31052e064a835620cd91f2d8f, type: 2}
   maxVectorLength: 0
   displayComputer: {fileID: 7200000, guid: a8d60100fb85de848887f8fac4b2811f, type: 3}
---- !u!114 &5176312987316993570
+--- !u!114 &5715201624916766781
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,9 +92,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5176312987316993571}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 881dcafd5b4fd414591fa4849f9e38f4, type: 3}
+  m_Script: {fileID: 11500000, guid: 875feba70b0db3f47a9582d7ca63ca44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  computeShader: {fileID: 7200000, guid: 0ddddb5534f44ad49a93bdbbbdda102a, type: 3}
+  computeShader: {fileID: 7200000, guid: 1f089526fd53f834a8214d374f0fd5c5, type: 3}
   fieldType: 0
-  isDynamic: 1
+  isDynamic: 0

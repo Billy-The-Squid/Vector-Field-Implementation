@@ -92,6 +92,7 @@ public class VectorField : MonoBehaviour
     public Display display { get; protected set; }
 
 
+
     public delegate void Reminder();
     /// <summary>
     /// This delegate will get called prior to setting the positions buffer.
@@ -125,7 +126,6 @@ public class VectorField : MonoBehaviour
         preCalculations += Pass;
         preDisplay += Pass;
 
-
         preSetPositions();
 
         zone.SetPositions();
@@ -137,8 +137,6 @@ public class VectorField : MonoBehaviour
         {
             vectorsBuffer = new ComputeBuffer(numOfPoints, sizeof(Vector3)); // last arg: size of single object
         }
-
-        
     }
 
 
@@ -182,7 +180,6 @@ public class VectorField : MonoBehaviour
     private void LateUpdate() // WHAT REQUIRES THIS? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     {
         preDisplay();
-
         display.DisplayVectors(positionsBuffer, vectorsBuffer);
     }
 
